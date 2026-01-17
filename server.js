@@ -121,11 +121,11 @@ app.post('/api/analyze', async (req, res) => {
           role: 'user',
           content: `Fetch and analyze the content of this website: ${url}
 
-First, search for and retrieve the actual content from this website. Then provide your response in EXACTLY this JSON format (no other text, just the JSON):
+First, search for and retrieve the actual content from this website. Then provide your response in EXACTLY this JSON format (no other text before or after, just the JSON):
 
 {
-  "pageText": "the full text content you found on the page, including all headings, paragraphs, button text, and marketing copy",
-  "roast": "A 2-3 paragraph witty, comedic roast of this website's copy. You're a burnt-out copywriter who's seen it all and finds dark humor in corporate speak. Mix sharp observations with genuine comedy - think stand-up comedian doing a bit about startup culture, not a mean-spirited attack. Use analogies and comparisons that make people laugh ('Reading this is like watching someone use all the buzzwords from a LinkedIn bingo card in one sentence'). Point out absurdities with a smile. If they claim to be 'disrupting' something, joke about what that actually means. Be clever, not cruel. Sprinkle in some self-aware humor about how every website sounds the same now. End with something that makes them laugh. This will be read aloud so use good comedic timing - set up punchlines, use the rule of three, and pause for effect."
+  "pageText": "the full text content you found on the page including headings, paragraphs, and marketing copy",
+  "roast": "A 2-3 paragraph witty roast of this website. You're a comedian doing a bit about corporate websites. Mix sharp observations with humor - use funny analogies, point out absurdities with a smile, joke about buzzwords. Be clever, not cruel. Make fun of HOW they present themselves, not the product itself. Use good comedic timing with setups and punchlines. Make it fun to read aloud."
 }`
         }]
       })
