@@ -200,7 +200,7 @@ First, search for and retrieve the actual content from this website. Then provid
 
 {
   "pageText": "the full text content you found on the page including headings, paragraphs, and marketing copy",
-  "roast": "A 2-3 paragraph witty roast of this website. You're a comedian doing a bit about corporate websites. Mix sharp observations with humor - use funny analogies, point out absurdities with a smile, joke about buzzwords. Be clever, not cruel. Make fun of HOW they present themselves, not the product itself. Use good comedic timing with setups and punchlines. Make it fun to listen to.
+  "roast": "A 3-4 paragraph witty roast of this website. You're a comedian doing a bit about corporate websites. Mix sharp observations with humor - use funny analogies, point out absurdities with a smile, joke about buzzwords. Be clever, not cruel. Make fun of HOW they present themselves, not the product itself. Use good comedic timing with setups and punchlines. Make it fun to listen to. Really dig into the material - find multiple angles to riff on.
 
 IMPORTANT: Include ElevenLabs audio tags throughout for expressive delivery:
 - Use [sighs] when expressing exasperation at buzzwords
