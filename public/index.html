@@ -619,6 +619,18 @@
       const shareRoast = async () => {
         if (!results || !roast) return;
         
+        // If we already have a share URL, just copy it
+        if (shareUrl) {
+          try {
+            await navigator.clipboard.writeText(shareUrl);
+            setShareCopied(true);
+            setTimeout(() => setShareCopied(false), 2000);
+          } catch (err) {
+            console.error('Copy error:', err);
+          }
+          return;
+        }
+        
         setShareLoading(true);
         try {
           const response = await fetch('/api/share', {
@@ -642,7 +654,7 @@
           // Copy to clipboard
           await navigator.clipboard.writeText(data.shareUrl);
           setShareCopied(true);
-          setTimeout(() => setShareCopied(false), 3000);
+          setTimeout(() => setShareCopied(false), 2000);
         } catch (err) {
           console.error('Share error:', err);
           setTtsError('Failed to create share link');
