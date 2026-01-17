@@ -562,7 +562,8 @@
           };
           
           setAudioLoading(false);
-          audio.play();
+          setLoading(false);  // Now show results with audio ready
+          audio.play();  // Auto-play
         } catch (err) {
           console.error('TTS error:', err);
           const errorMsg = err.message.includes('Failed to fetch') 
@@ -570,6 +571,7 @@
             : err.message;
           setTtsError(`TTS failed: ${errorMsg}. Using browser voice.`);
           setAudioLoading(false);
+          setLoading(false);  // Show results even if audio failed
           setIsSpeaking(false);
           speakWithBrowserTTS();
         }
@@ -730,7 +732,6 @@
 
         try {
           // Call our backend which proxies to Anthropic
-          setLoadingStage('roasting');
           const response = await fetch('/api/analyze', {
             method: 'POST',
             headers: {
@@ -738,6 +739,9 @@
             },
             body: JSON.stringify({ url: processedUrl })
           });
+          
+          // Move to roasting stage once we get the response back
+          setLoadingStage('roasting');
 
           const data = await response.json();
           
@@ -769,10 +773,10 @@
           
           setResults(analysis);
           setRoast(parsed.roast);
+          // Don't set loading to false here - wait for audio to complete
 
         } catch (err) {
           setError(`Failed to analyze website: ${err.message}. Either the site is hiding from judgment, or something went wrong on our end.`);
-        } finally {
           setLoading(false);
         }
       };
@@ -926,8 +930,8 @@
               </div>
             )}
 
-            {/* Loading */}
-            {(loading || (audioLoading && !results)) && (
+            {/* Loading - show progress indicator through all stages until audio ready */}
+            {loading && (
               <ProgressIndicator 
                 stage={loadingStage} 
                 loadingMessages={loadingMessages}
@@ -935,7 +939,7 @@
               />
             )}
 
-            {/* Results */}
+            {/* Results - only show when everything is ready */}
             {results && !loading && (
               <div>
                 {/* Overall Score */}
