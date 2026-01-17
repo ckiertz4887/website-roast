@@ -289,6 +289,11 @@
       const [audioDuration, setAudioDuration] = useState(0);
       const [audioCurrentTime, setAudioCurrentTime] = useState(0);
       const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+      const [shareUrl, setShareUrl] = useState(null);
+      const [shareLoading, setShareLoading] = useState(false);
+      const [shareCopied, setShareCopied] = useState(false);
+      const [isSharedView, setIsSharedView] = useState(false);
+      const [audioBase64, setAudioBase64] = useState(null);
       const audioRef = useRef(null);
       const canvasRef = useRef(null);
       const analyserRef = useRef(null);
@@ -298,6 +303,15 @@
       // Check for speech synthesis support (fallback for browser TTS)
       useEffect(() => {
         setSpeechSupported('speechSynthesis' in window);
+        
+        // Check if we're viewing a shared roast
+        const pathMatch = window.location.pathname.match(/^\/r\/([a-zA-Z0-9_-]+)$/);
+        if (pathMatch) {
+          const shareId = pathMatch[1];
+          setIsSharedView(true);
+          loadSharedRoast(shareId);
+          return;
+        }
         
         // Load cached results from localStorage on mount
         try {
@@ -312,6 +326,57 @@
           console.log('No cached results found');
         }
       }, []);
+      
+      // Load a shared roast
+      const loadSharedRoast = async (shareId) => {
+        try {
+          setLoading(true);
+          const response = await fetch(`/api/share/${shareId}`);
+          if (!response.ok) {
+            throw new Error('Roast not found');
+          }
+          const data = await response.json();
+          setUrl(data.url);
+          setResults(data.results);
+          setRoast(data.roast);
+          
+          // If there's audio, load it
+          if (data.audio) {
+            const audioBlob = base64ToBlob(data.audio, 'audio/mpeg');
+            const audioUrl = URL.createObjectURL(audioBlob);
+            setAudioUrl(audioUrl);
+            setAudioBase64(data.audio);
+          }
+        } catch (e) {
+          setError('This roast could not be found. It may have expired or been deleted.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      // Helper to convert base64 to blob
+      const base64ToBlob = (base64, mimeType) => {
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        return new Blob([byteArray], { type: mimeType });
+      };
+      
+      // Helper to convert blob to base64
+      const blobToBase64 = (blob) => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = reader.result.split(',')[1];
+            resolve(base64);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      };
       
       // Save results to localStorage whenever they change
       useEffect(() => {
@@ -415,6 +480,10 @@
           const newAudioUrl = URL.createObjectURL(audioBlob);
           setAudioUrl(newAudioUrl);
           
+          // Store base64 for sharing
+          const base64Audio = await blobToBase64(audioBlob);
+          setAudioBase64(base64Audio);
+          
           const audio = new Audio(newAudioUrl);
           audioRef.current = audio;
           
@@ -499,6 +568,41 @@
         document.body.removeChild(a);
       };
 
+      const shareRoast = async () => {
+        if (!results || !roast) return;
+        
+        setShareLoading(true);
+        try {
+          const response = await fetch('/api/share', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              url,
+              roast,
+              results,
+              audio: audioBase64 || null
+            })
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to create share link');
+          }
+          
+          const data = await response.json();
+          setShareUrl(data.shareUrl);
+          
+          // Copy to clipboard
+          await navigator.clipboard.writeText(data.shareUrl);
+          setShareCopied(true);
+          setTimeout(() => setShareCopied(false), 3000);
+        } catch (err) {
+          console.error('Share error:', err);
+          setTtsError('Failed to create share link');
+        } finally {
+          setShareLoading(false);
+        }
+      };
+
       const togglePlayPause = () => {
         if (!audioRef.current) return;
         if (isAudioPlaying) {
@@ -553,11 +657,14 @@
         setRoast('');
         setTtsError('');
         setCopySuccess(false);
+        setShareUrl(null);
+        setShareCopied(false);
+        setAudioBase64(null);
         if (audioUrl) {
           URL.revokeObjectURL(audioUrl);
           setAudioUrl(null);
         }
-        setLoadingMessage(LOADING_MESSAGES[0]);
+        setLoadingMessages([LOADING_MESSAGES[0]]);
 
         try {
           // Call our backend which proxies to Anthropic
@@ -894,6 +1001,22 @@
                             💾 Download MP3
                           </button>
                         )}
+                        <button
+                          onClick={shareRoast}
+                          disabled={shareLoading}
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: '14px',
+                            background: shareCopied ? '#22c55e' : shareUrl ? '#8b5cf6' : '#2a2a4e',
+                            border: '1px solid #444',
+                            borderRadius: '8px',
+                            color: '#fff',
+                            cursor: shareLoading ? 'wait' : 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {shareLoading ? '⏳ Creating...' : shareCopied ? '✓ Link Copied!' : shareUrl ? '🔗 Copy Link Again' : '🔗 Share'}
+                        </button>
                       </div>
                     )}
                   </div>
