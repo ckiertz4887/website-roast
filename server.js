@@ -30,29 +30,30 @@ if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
 // --------------------
 async function redisSet(key, value, expirationSeconds = 60 * 60 * 24 * 30) {
   // Store for 30 days by default
-  if (!UPSTASH_REDIS_REST_URL) {
-    console.error('[Redis] No UPSTASH_REDIS_REST_URL configured');
+  if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
+    console.error('[Redis] Missing Upstash credentials');
     return false;
   }
   
   try {
-    const response = await fetch(`${UPSTASH_REDIS_REST_URL}/set/${key}?EX=${expirationSeconds}`, {
+    // Upstash REST API uses a different format - send command as array in body
+    const response = await fetch(`${UPSTASH_REDIS_REST_URL}`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${UPSTASH_REDIS_REST_TOKEN}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(value)
+      body: JSON.stringify(['SET', key, JSON.stringify(value), 'EX', expirationSeconds])
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[Redis] Set failed:', response.status, errorText);
+    const result = await response.json();
+    console.log('[Redis] Set response:', result);
+    
+    if (result.error) {
+      console.error('[Redis] Set error:', result.error);
       return false;
     }
     
-    const result = await response.json();
-    console.log('[Redis] Set result:', result);
     return result.result === 'OK';
   } catch (e) {
     console.error('[Redis] Set error:', e);
@@ -61,15 +62,29 @@ async function redisSet(key, value, expirationSeconds = 60 * 60 * 24 * 30) {
 }
 
 async function redisGet(key) {
-  if (!UPSTASH_REDIS_REST_URL) return null;
+  if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
+    console.error('[Redis] Missing Upstash credentials');
+    return null;
+  }
   
   try {
-    const response = await fetch(`${UPSTASH_REDIS_REST_URL}/get/${key}`, {
+    const response = await fetch(`${UPSTASH_REDIS_REST_URL}`, {
+      method: 'POST',
       headers: {
-        Authorization: `Bearer ${UPSTASH_REDIS_REST_TOKEN}`
-      }
+        Authorization: `Bearer ${UPSTASH_REDIS_REST_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(['GET', key])
     });
+    
     const data = await response.json();
+    console.log('[Redis] Get response for', key, ':', data.result ? 'found' : 'not found');
+    
+    if (data.error) {
+      console.error('[Redis] Get error:', data.error);
+      return null;
+    }
+    
     return data.result ? JSON.parse(data.result) : null;
   } catch (e) {
     console.error('[Redis] Get error:', e);
@@ -310,13 +325,13 @@ app.post('/api/share', async (req, res) => {
     const { url, roast, results, audio } = req.body;
     
     if (!url || !roast || !results) {
-      console.error('[Share] Missing required fields:', { url: !!url, roast: !!roast, results: !!results });
+      console.error('[Share] Missing required fields');
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
-    if (!UPSTASH_REDIS_REST_URL) {
+    if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
       console.error('[Share] Upstash not configured');
-      return res.status(500).json({ error: 'Sharing is not configured' });
+      return res.status(500).json({ error: 'Sharing is not configured - missing Upstash credentials' });
     }
     
     const shareId = generateShareId();
@@ -329,16 +344,16 @@ app.post('/api/share', async (req, res) => {
       createdAt: Date.now()
     };
     
-    console.log(`[Share] Attempting to save roast ${shareId} for ${url} (audio: ${audio ? 'yes' : 'no'})`);
+    console.log(`[Share] Saving roast ${shareId} for ${url} (audio: ${audio ? 'yes' : 'no'}, size: ${JSON.stringify(shareData).length} bytes)`);
     
     const saved = await redisSet(`roast:${shareId}`, shareData);
     
     if (!saved) {
       console.error('[Share] Failed to save to Redis');
-      return res.status(500).json({ error: 'Failed to save roast' });
+      return res.status(500).json({ error: 'Failed to save roast to database' });
     }
     
-    console.log(`[Share] Successfully saved roast ${shareId} for ${url}`);
+    console.log(`[Share] Successfully saved roast ${shareId}`);
     res.json({ shareId, shareUrl: `https://www.wroast.co/r/${shareId}` });
     
   } catch (error) {
