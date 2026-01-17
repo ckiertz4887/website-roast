@@ -96,6 +96,12 @@
       "Tuning the cynicism frequency...",
     ];
 
+    // Strip ElevenLabs audio tags from display text (e.g., [sighs], [chuckles], etc.)
+    function stripAudioTags(text) {
+      if (!text) return '';
+      return text.replace(/\[(?:sighs?|chuckles?|laughs?|sarcastically|dramatically|pause|sassy|sarcastic|comedic)[^\]]*\]/gi, '').replace(/\s+/g, ' ').trim();
+    }
+
     const BUZZWORDS = [
       'synergy', 'leverage', 'disrupt', 'disrupting', 'disruptive', 'innovative', 'innovation',
       'scalable', 'scale', 'ai-powered', 'ai powered', 'machine learning', 'blockchain',
@@ -1176,7 +1182,7 @@
                     lineHeight: '1.7',
                     whiteSpace: 'pre-wrap'
                   }}>
-                    {roast}
+                    {stripAudioTags(roast)}
                   </div>
                 </div>
 

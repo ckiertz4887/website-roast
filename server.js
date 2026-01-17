@@ -30,7 +30,10 @@ if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
 // --------------------
 async function redisSet(key, value, expirationSeconds = 60 * 60 * 24 * 30) {
   // Store for 30 days by default
-  if (!UPSTASH_REDIS_REST_URL) return null;
+  if (!UPSTASH_REDIS_REST_URL) {
+    console.error('[Redis] No UPSTASH_REDIS_REST_URL configured');
+    return false;
+  }
   
   try {
     const response = await fetch(`${UPSTASH_REDIS_REST_URL}/set/${key}?EX=${expirationSeconds}`, {
@@ -41,7 +44,16 @@ async function redisSet(key, value, expirationSeconds = 60 * 60 * 24 * 30) {
       },
       body: JSON.stringify(value)
     });
-    return response.ok;
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[Redis] Set failed:', response.status, errorText);
+      return false;
+    }
+    
+    const result = await response.json();
+    console.log('[Redis] Set result:', result);
+    return result.result === 'OK';
   } catch (e) {
     console.error('[Redis] Set error:', e);
     return false;
@@ -298,7 +310,13 @@ app.post('/api/share', async (req, res) => {
     const { url, roast, results, audio } = req.body;
     
     if (!url || !roast || !results) {
+      console.error('[Share] Missing required fields:', { url: !!url, roast: !!roast, results: !!results });
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    if (!UPSTASH_REDIS_REST_URL) {
+      console.error('[Share] Upstash not configured');
+      return res.status(500).json({ error: 'Sharing is not configured' });
     }
     
     const shareId = generateShareId();
@@ -311,13 +329,16 @@ app.post('/api/share', async (req, res) => {
       createdAt: Date.now()
     };
     
+    console.log(`[Share] Attempting to save roast ${shareId} for ${url} (audio: ${audio ? 'yes' : 'no'})`);
+    
     const saved = await redisSet(`roast:${shareId}`, shareData);
     
     if (!saved) {
+      console.error('[Share] Failed to save to Redis');
       return res.status(500).json({ error: 'Failed to save roast' });
     }
     
-    console.log(`[Share] Saved roast ${shareId} for ${url}`);
+    console.log(`[Share] Successfully saved roast ${shareId} for ${url}`);
     res.json({ shareId, shareUrl: `https://www.wroast.co/r/${shareId}` });
     
   } catch (error) {
