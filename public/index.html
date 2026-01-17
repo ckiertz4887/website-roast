@@ -41,6 +41,59 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+    
+    /* Mobile responsive styles */
+    @media (max-width: 600px) {
+      .main-container {
+        padding: 20px 12px !important;
+      }
+      .main-title {
+        font-size: 32px !important;
+      }
+      .input-container {
+        flex-direction: column !important;
+      }
+      .input-container input {
+        width: 100% !important;
+      }
+      .input-container button {
+        width: 100% !important;
+      }
+      .roast-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+      }
+      .button-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+      }
+      .button-row > button {
+        width: 100% !important;
+        justify-content: center !important;
+      }
+      .share-url-box {
+        flex-direction: column !important;
+        margin-left: 0 !important;
+        margin-top: 8px !important;
+        width: 100% !important;
+      }
+      .share-url-box input {
+        width: 100% !important;
+      }
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+      .audio-controls {
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 8px !important;
+      }
+      .report-cards {
+        grid-template-columns: 1fr !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -753,25 +806,31 @@
       };
 
       return (
-        <div style={{
-          minHeight: '100vh',
-          background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%)',
-          color: '#fff',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          padding: '40px 20px'
-        }}>
+        <div 
+          className="main-container"
+          style={{
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%)',
+            color: '#fff',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            padding: '40px 20px'
+          }}
+        >
           <div style={{ maxWidth: '800px', margin: '0 auto' }}>
             {/* Header */}
             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-              <h1 style={{ 
-                fontSize: '48px', 
-                marginBottom: '8px',
-                background: 'linear-gradient(90deg, #ff6b6b, #feca57, #ff6b6b)',
-                backgroundSize: '200% auto',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                animation: 'shimmer 3s linear infinite'
-              }}>
+              <h1 
+                className="main-title"
+                style={{ 
+                  fontSize: '48px', 
+                  marginBottom: '8px',
+                  background: 'linear-gradient(90deg, #ff6b6b, #feca57, #ff6b6b)',
+                  backgroundSize: '200% auto',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  animation: 'shimmer 3s linear infinite'
+                }}
+              >
                 🔥 Website Roaster
               </h1>
               <p style={{ color: '#888', fontSize: '18px' }}>
@@ -790,11 +849,14 @@
             </div>
 
             {/* Input */}
-            <div style={{
-              display: 'flex',
-              gap: '12px',
-              marginBottom: '32px'
-            }}>
+            <div 
+              className="input-container"
+              style={{
+                display: 'flex',
+                gap: '12px',
+                marginBottom: '32px'
+              }}
+            >
               <input
                 type="text"
                 value={url}
@@ -934,14 +996,17 @@
                   marginBottom: '24px',
                   border: '2px solid #ff6b6b33'
                 }}>
-                  <div style={{ 
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '16px',
-                    flexWrap: 'wrap',
-                    gap: '12px'
-                  }}>
+                  <div 
+                    className="roast-header"
+                    style={{ 
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '16px',
+                      flexWrap: 'wrap',
+                      gap: '12px'
+                    }}
+                  >
                     <h2 style={{ 
                       fontSize: '20px', 
                       margin: 0,
@@ -952,7 +1017,7 @@
                       🎤 The Roast
                     </h2>
                     {(speechSupported) && (
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div className="button-row" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                         {!audioUrl && (
                           <button
                             onClick={speakRoast}
@@ -1024,7 +1089,7 @@
                           {shareLoading ? '⏳ Creating...' : shareCopied ? '✓ Copied!' : shareUrl ? '🔗 Copy Again' : '🔗 Share'}
                         </button>
                         {shareUrl && (
-                          <div style={{
+                          <div className="share-url-box" style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: '8px',
@@ -1142,12 +1207,15 @@
                       </div>
                       
                       {/* Controls */}
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '16px'
-                      }}>
+                      <div 
+                        className="audio-controls"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '16px'
+                        }}
+                      >
                         <span style={{ fontSize: '12px', color: '#666', minWidth: '40px' }}>
                           {formatTime(audioCurrentTime)}
                         </span>
@@ -1233,12 +1301,15 @@
                 </div>
 
                 {/* Report Cards Grid */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                  gap: '16px',
-                  marginBottom: '24px'
-                }}>
+                <div 
+                  className="report-cards"
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                    gap: '16px',
+                    marginBottom: '24px'
+                  }}
+                >
                   <ReportCard
                     title="Buzzword Count"
                     score={results.buzzwords.total}
@@ -1269,14 +1340,17 @@
                 </div>
 
                 {/* Additional Stats */}
-                <div style={{
-                  background: '#1a1a2e',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                  gap: '16px'
-                }}>
+                <div 
+                  className="stats-grid"
+                  style={{
+                    background: '#1a1a2e',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                    gap: '16px'
+                  }}
+                >
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ color: '#888', fontSize: '12px', marginBottom: '4px' }}>Word Count</div>
                     <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{results.wordCount}</div>
