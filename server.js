@@ -115,7 +115,7 @@ app.post('/api/analyze', async (req, res) => {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 4096,
+        max_tokens: 1500,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{
           role: 'user',
@@ -125,7 +125,7 @@ First, search for and retrieve the actual content from this website. Then provid
 
 {
   "pageText": "the full text content you found on the page, including all headings, paragraphs, button text, and marketing copy",
-  "roast": "A 2-3 paragraph sarcastic, cynical roast of this website. Be witty and cutting. Mock their corporate speak, vague promises, and desperate attempts to sound important. Channel your inner disappointed copywriter who's seen too many 'revolutionary' startups. Don't be mean about the actual product/service, just the way they present themselves. Include specific examples from their site. Make it entertaining and funny - this will be read aloud so make it flow well when spoken."
+  "roast": "A 2-3 paragraph witty, comedic roast of this website's copy. You're a burnt-out copywriter who's seen it all and finds dark humor in corporate speak. Mix sharp observations with genuine comedy - think stand-up comedian doing a bit about startup culture, not a mean-spirited attack. Use analogies and comparisons that make people laugh ('Reading this is like watching someone use all the buzzwords from a LinkedIn bingo card in one sentence'). Point out absurdities with a smile. If they claim to be 'disrupting' something, joke about what that actually means. Be clever, not cruel. Sprinkle in some self-aware humor about how every website sounds the same now. End with something that makes them laugh. This will be read aloud so use good comedic timing - set up punchlines, use the rule of three, and pause for effect."
 }`
         }]
       })
