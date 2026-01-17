@@ -96,7 +96,7 @@
       "Tuning the cynicism frequency...",
     ];
 
-    // Strip ElevenLabs audio tags from display text (e.g., [sighs], [chuckles], etc.)
+    // Strip ElevenLabs audio tags from display text
     function stripAudioTags(text) {
       if (!text) return '';
       return text.replace(/\[(?:sighs?|chuckles?|laughs?|sarcastically|dramatically|pause|sassy|sarcastic|comedic)[^\]]*\]/gi, '').replace(/\s+/g, ' ').trim();
@@ -1023,58 +1023,54 @@
                         >
                           {shareLoading ? '⏳ Creating...' : shareCopied ? '✓ Copied!' : shareUrl ? '🔗 Copy Again' : '🔗 Share'}
                         </button>
+                        {shareUrl && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: '#0f0f1a',
+                            borderRadius: '6px',
+                            padding: '6px 10px',
+                            border: '1px solid #333',
+                            marginLeft: '4px'
+                          }}>
+                            <input
+                              type="text"
+                              value={shareUrl}
+                              readOnly
+                              onClick={(e) => e.target.select()}
+                              style={{
+                                width: '180px',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#8b5cf6',
+                                fontSize: '12px',
+                                fontFamily: 'monospace',
+                                outline: 'none'
+                              }}
+                            />
+                            <button
+                              onClick={async () => {
+                                await navigator.clipboard.writeText(shareUrl);
+                                setShareCopied(true);
+                                setTimeout(() => setShareCopied(false), 2000);
+                              }}
+                              style={{
+                                padding: '4px 8px',
+                                fontSize: '11px',
+                                background: shareCopied ? '#22c55e' : '#333',
+                                border: 'none',
+                                borderRadius: '4px',
+                                color: '#fff',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              {shareCopied ? '✓' : '📋'}
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      
-                      {/* Copyable Share URL */}
-                      {shareUrl && (
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          marginTop: '12px',
-                          background: '#0f0f1a',
-                          borderRadius: '8px',
-                          padding: '8px 12px',
-                          border: '1px solid #333'
-                        }}>
-                          <input
-                            type="text"
-                            value={shareUrl}
-                            readOnly
-                            onClick={(e) => e.target.select()}
-                            style={{
-                              flex: 1,
-                              background: 'transparent',
-                              border: 'none',
-                              color: '#8b5cf6',
-                              fontSize: '13px',
-                              fontFamily: 'monospace',
-                              outline: 'none',
-                              cursor: 'text'
-                            }}
-                          />
-                          <button
-                            onClick={async () => {
-                              await navigator.clipboard.writeText(shareUrl);
-                              setShareCopied(true);
-                              setTimeout(() => setShareCopied(false), 2000);
-                            }}
-                            style={{
-                              padding: '6px 10px',
-                              fontSize: '12px',
-                              background: shareCopied ? '#22c55e' : '#2a2a4e',
-                              border: '1px solid #444',
-                              borderRadius: '6px',
-                              color: '#fff',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s',
-                              whiteSpace: 'nowrap'
-                            }}
-                          >
-                            {shareCopied ? '✓' : '📋 Copy'}
-                          </button>
-                        </div>
-                      )}
+                    )}
                   </div>
                   
                   {/* TTS Loading Message */}
