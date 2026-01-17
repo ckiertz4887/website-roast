@@ -343,7 +343,6 @@
       const [audioLoading, setAudioLoading] = useState(false);
       const [ttsError, setTtsError] = useState('');
       const [ttsLoadingMessage, setTtsLoadingMessage] = useState(TTS_LOADING_MESSAGES[0]);
-      const [copySuccess, setCopySuccess] = useState(false);
       const [audioUrl, setAudioUrl] = useState(null);
       const [audioDuration, setAudioDuration] = useState(0);
       const [audioCurrentTime, setAudioCurrentTime] = useState(0);
@@ -607,16 +606,6 @@
         window.speechSynthesis.speak(utterance);
       };
 
-      const copyRoastToClipboard = async () => {
-        try {
-          await navigator.clipboard.writeText(roast);
-          setCopySuccess(true);
-          setTimeout(() => setCopySuccess(false), 2000);
-        } catch (err) {
-          console.error('Failed to copy:', err);
-        }
-      };
-
       const downloadAudio = () => {
         if (!audioUrl) return;
         const a = document.createElement('a');
@@ -715,7 +704,6 @@
         setResults(null);
         setRoast('');
         setTtsError('');
-        setCopySuccess(false);
         setShareUrl(null);
         setShareCopied(false);
         setAudioBase64(null);
@@ -1040,21 +1028,6 @@
                             {audioLoading ? '⏳ Generating...' : '🎙️ Generate Audio (it\'s worth it)'}
                           </button>
                         )}
-                        <button
-                          onClick={copyRoastToClipboard}
-                          style={{
-                            padding: '8px 12px',
-                            fontSize: '14px',
-                            background: copySuccess ? '#22c55e' : '#2a2a4e',
-                            border: '1px solid #444',
-                            borderRadius: '8px',
-                            color: '#fff',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                        >
-                          {copySuccess ? '✓ Copied!' : '📋 Copy'}
-                        </button>
                         {audioUrl && (
                           <button
                             onClick={downloadAudio}
