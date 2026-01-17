@@ -41,59 +41,6 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    
-    /* Mobile responsive styles */
-    @media (max-width: 600px) {
-      .main-container {
-        padding: 20px 12px !important;
-      }
-      .main-title {
-        font-size: 32px !important;
-      }
-      .input-container {
-        flex-direction: column !important;
-      }
-      .input-container input {
-        width: 100% !important;
-      }
-      .input-container button {
-        width: 100% !important;
-      }
-      .roast-header {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 12px !important;
-      }
-      .button-row {
-        flex-direction: column !important;
-        align-items: stretch !important;
-        width: 100% !important;
-      }
-      .button-row > button {
-        width: 100% !important;
-        justify-content: center !important;
-      }
-      .share-url-box {
-        flex-direction: column !important;
-        margin-left: 0 !important;
-        margin-top: 8px !important;
-        width: 100% !important;
-      }
-      .share-url-box input {
-        width: 100% !important;
-      }
-      .stats-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-      }
-      .audio-controls {
-        flex-wrap: wrap !important;
-        justify-content: center !important;
-        gap: 8px !important;
-      }
-      .report-cards {
-        grid-template-columns: 1fr !important;
-      }
-    }
   </style>
 </head>
 <body>
@@ -149,10 +96,85 @@
       "Tuning the cynicism frequency...",
     ];
 
-    // Strip ElevenLabs audio tags from display text
     function stripAudioTags(text) {
       if (!text) return '';
       return text.replace(/\[(?:sighs?|chuckles?|laughs?|sarcastically|dramatically|pause|sassy|sarcastic|comedic)[^\]]*\]/gi, '').replace(/\s+/g, ' ').trim();
+    }
+
+    function ProgressIndicator({ stage, loadingMessages, ttsLoadingMessage }) {
+      const stages = [
+        { key: 'analyzing', label: 'Analyzing website', icon: '🔍' },
+        { key: 'roasting', label: 'Generating roast', icon: '🔥' },
+        { key: 'audio', label: 'Creating audio', icon: '🎙️' }
+      ];
+      
+      let currentIndex = stages.findIndex(s => s.key === stage);
+      if (currentIndex === -1) currentIndex = 0;
+      
+      return (
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            gap: '8px',
+            marginBottom: '32px',
+            flexWrap: 'wrap'
+          }}>
+            {stages.map((s, index) => {
+              const isComplete = index < currentIndex;
+              const isCurrent = index === currentIndex;
+              return (
+                <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 16px',
+                    background: isComplete ? '#22c55e22' : isCurrent ? '#8b5cf622' : '#1a1a2e',
+                    border: '2px solid ' + (isComplete ? '#22c55e' : isCurrent ? '#8b5cf6' : '#333'),
+                    borderRadius: '24px'
+                  }}>
+                    <span style={{ fontSize: '16px' }}>{isComplete ? '✓' : s.icon}</span>
+                    <span style={{ 
+                      color: isComplete ? '#22c55e' : isCurrent ? '#fff' : '#666',
+                      fontSize: '14px',
+                      fontWeight: isCurrent ? 'bold' : 'normal'
+                    }}>{s.label}</span>
+                  </div>
+                  {index < stages.length - 1 && (
+                    <div style={{ width: '24px', height: '2px', background: isComplete ? '#22c55e' : '#333' }} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          
+          <div style={{ fontSize: '48px', marginBottom: '16px', animation: 'spin 2s linear infinite' }}>
+            {stages[currentIndex].icon}
+          </div>
+          
+          {stage === 'audio' ? (
+            <p style={{ color: '#fff', fontSize: '16px', margin: '8px 0' }}>{ttsLoadingMessage}</p>
+          ) : (
+            <div style={{ maxHeight: '150px', overflow: 'hidden', marginBottom: '16px' }}>
+              {loadingMessages.map((msg, index) => (
+                <p key={index} style={{ 
+                  color: index === loadingMessages.length - 1 ? '#fff' : '#666', 
+                  fontSize: index === loadingMessages.length - 1 ? '16px' : '13px',
+                  margin: '8px 0',
+                  opacity: index === loadingMessages.length - 1 ? 1 : 0.6
+                }}>
+                  {index === loadingMessages.length - 1 ? msg : '✓ ' + msg}
+                </p>
+              ))}
+            </div>
+          )}
+          
+          <p style={{ color: '#666', fontSize: '14px', marginTop: '16px' }}>
+            {stage === 'audio' ? "Almost there! The best part is coming..." : "This might take a moment. The site has a lot to answer for."}
+          </p>
+        </div>
+      );
     }
 
     const BUZZWORDS = [
@@ -299,38 +321,6 @@
       );
     }
 
-    function LoadingSpinner({ messages }) {
-      return (
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <div style={{ 
-            fontSize: '48px', 
-            marginBottom: '16px',
-            animation: 'spin 2s linear infinite'
-          }}>🔍</div>
-          <div style={{ 
-            maxHeight: '200px',
-            overflow: 'hidden',
-            marginBottom: '16px'
-          }}>
-            {messages.map((msg, index) => (
-              <p key={index} style={{ 
-                color: index === messages.length - 1 ? '#fff' : '#666', 
-                fontSize: index === messages.length - 1 ? '16px' : '13px',
-                margin: '8px 0',
-                opacity: index === messages.length - 1 ? 1 : 0.6,
-                transition: 'all 0.3s ease'
-              }}>
-                {index === messages.length - 1 ? msg : `✓ ${msg}`}
-              </p>
-            ))}
-          </div>
-          <p style={{ color: '#666', fontSize: '14px', marginTop: '8px' }}>
-            This might take a moment. The site has a lot to answer for.
-          </p>
-        </div>
-      );
-    }
-
     function WebsiteRoaster() {
       const [url, setUrl] = useState('');
       const [loading, setLoading] = useState(false);
@@ -343,6 +333,7 @@
       const [audioLoading, setAudioLoading] = useState(false);
       const [ttsError, setTtsError] = useState('');
       const [ttsLoadingMessage, setTtsLoadingMessage] = useState(TTS_LOADING_MESSAGES[0]);
+      const [copySuccess, setCopySuccess] = useState(false);
       const [audioUrl, setAudioUrl] = useState(null);
       const [audioDuration, setAudioDuration] = useState(0);
       const [audioCurrentTime, setAudioCurrentTime] = useState(0);
@@ -352,6 +343,8 @@
       const [shareCopied, setShareCopied] = useState(false);
       const [isSharedView, setIsSharedView] = useState(false);
       const [audioBase64, setAudioBase64] = useState(null);
+      const [loadingStage, setLoadingStage] = useState('analyzing');
+      const [shouldAutoGenerateAudio, setShouldAutoGenerateAudio] = useState(false);
       const audioRef = useRef(null);
       const canvasRef = useRef(null);
       const analyserRef = useRef(null);
@@ -503,6 +496,7 @@
 
         setTtsError('');
         setAudioLoading(true);
+        setLoadingStage('audio');
         setIsSpeaking(true);
 
         try {
@@ -606,6 +600,24 @@
         window.speechSynthesis.speak(utterance);
       };
 
+      const copyRoastToClipboard = async () => {
+        try {
+          await navigator.clipboard.writeText(roast);
+          setCopySuccess(true);
+          setTimeout(() => setCopySuccess(false), 2000);
+        } catch (err) {
+          console.error('Failed to copy:', err);
+        }
+      };
+
+      // Auto-generate audio when a fresh roast completes
+      useEffect(() => {
+        if (shouldAutoGenerateAudio && roast && !audioUrl && !audioLoading) {
+          setShouldAutoGenerateAudio(false);
+          speakRoast();
+        }
+      }, [shouldAutoGenerateAudio, roast, audioUrl, audioLoading]);
+
       const downloadAudio = () => {
         if (!audioUrl) return;
         const a = document.createElement('a');
@@ -618,18 +630,6 @@
 
       const shareRoast = async () => {
         if (!results || !roast) return;
-        
-        // If we already have a share URL, just copy it
-        if (shareUrl) {
-          try {
-            await navigator.clipboard.writeText(shareUrl);
-            setShareCopied(true);
-            setTimeout(() => setShareCopied(false), 2000);
-          } catch (err) {
-            console.error('Copy error:', err);
-          }
-          return;
-        }
         
         setShareLoading(true);
         try {
@@ -654,7 +654,7 @@
           // Copy to clipboard
           await navigator.clipboard.writeText(data.shareUrl);
           setShareCopied(true);
-          setTimeout(() => setShareCopied(false), 2000);
+          setTimeout(() => setShareCopied(false), 3000);
         } catch (err) {
           console.error('Share error:', err);
           setTtsError('Failed to create share link');
@@ -712,13 +712,16 @@
         }
 
         setLoading(true);
+        setLoadingStage('analyzing');
         setError('');
         setResults(null);
         setRoast('');
         setTtsError('');
+        setCopySuccess(false);
         setShareUrl(null);
         setShareCopied(false);
         setAudioBase64(null);
+        setShouldAutoGenerateAudio(true);
         if (audioUrl) {
           URL.revokeObjectURL(audioUrl);
           setAudioUrl(null);
@@ -727,6 +730,7 @@
 
         try {
           // Call our backend which proxies to Anthropic
+          setLoadingStage('roasting');
           const response = await fetch('/api/analyze', {
             method: 'POST',
             headers: {
@@ -806,31 +810,25 @@
       };
 
       return (
-        <div 
-          className="main-container"
-          style={{
-            minHeight: '100vh',
-            background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%)',
-            color: '#fff',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            padding: '40px 20px'
-          }}
-        >
+        <div style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%)',
+          color: '#fff',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          padding: '40px 20px'
+        }}>
           <div style={{ maxWidth: '800px', margin: '0 auto' }}>
             {/* Header */}
             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-              <h1 
-                className="main-title"
-                style={{ 
-                  fontSize: '48px', 
-                  marginBottom: '8px',
-                  background: 'linear-gradient(90deg, #ff6b6b, #feca57, #ff6b6b)',
-                  backgroundSize: '200% auto',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  animation: 'shimmer 3s linear infinite'
-                }}
-              >
+              <h1 style={{ 
+                fontSize: '48px', 
+                marginBottom: '8px',
+                background: 'linear-gradient(90deg, #ff6b6b, #feca57, #ff6b6b)',
+                backgroundSize: '200% auto',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                animation: 'shimmer 3s linear infinite'
+              }}>
                 🔥 Website Roaster
               </h1>
               <p style={{ color: '#888', fontSize: '18px' }}>
@@ -849,14 +847,11 @@
             </div>
 
             {/* Input */}
-            <div 
-              className="input-container"
-              style={{
-                display: 'flex',
-                gap: '12px',
-                marginBottom: '32px'
-              }}
-            >
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              marginBottom: '32px'
+            }}>
               <input
                 type="text"
                 value={url}
@@ -932,7 +927,13 @@
             )}
 
             {/* Loading */}
-            {loading && <LoadingSpinner messages={loadingMessages} />}
+            {(loading || (audioLoading && !results)) && (
+              <ProgressIndicator 
+                stage={loadingStage} 
+                loadingMessages={loadingMessages}
+                ttsLoadingMessage={ttsLoadingMessage}
+              />
+            )}
 
             {/* Results */}
             {results && !loading && (
@@ -996,17 +997,14 @@
                   marginBottom: '24px',
                   border: '2px solid #ff6b6b33'
                 }}>
-                  <div 
-                    className="roast-header"
-                    style={{ 
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '16px',
-                      flexWrap: 'wrap',
-                      gap: '12px'
-                    }}
-                  >
+                  <div style={{ 
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '16px',
+                    flexWrap: 'wrap',
+                    gap: '12px'
+                  }}>
                     <h2 style={{ 
                       fontSize: '20px', 
                       margin: 0,
@@ -1017,7 +1015,7 @@
                       🎤 The Roast
                     </h2>
                     {(speechSupported) && (
-                      <div className="button-row" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                         {!audioUrl && (
                           <button
                             onClick={speakRoast}
@@ -1040,6 +1038,21 @@
                             {audioLoading ? '⏳ Generating...' : '🎙️ Generate Audio (it\'s worth it)'}
                           </button>
                         )}
+                        <button
+                          onClick={copyRoastToClipboard}
+                          style={{
+                            padding: '8px 12px',
+                            fontSize: '14px',
+                            background: copySuccess ? '#22c55e' : '#2a2a4e',
+                            border: '1px solid #444',
+                            borderRadius: '8px',
+                            color: '#fff',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {copySuccess ? '✓ Copied!' : '📋 Copy'}
+                        </button>
                         {audioUrl && (
                           <button
                             onClick={downloadAudio}
@@ -1071,54 +1084,8 @@
                             transition: 'all 0.2s'
                           }}
                         >
-                          {shareLoading ? '⏳ Creating...' : shareCopied ? '✓ Copied!' : shareUrl ? '🔗 Copy Again' : '🔗 Share'}
+                          {shareLoading ? '⏳ Creating...' : shareCopied ? '✓ Link Copied!' : shareUrl ? '🔗 Copy Link Again' : '🔗 Share'}
                         </button>
-                        {shareUrl && (
-                          <div className="share-url-box" style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            background: '#0f0f1a',
-                            borderRadius: '6px',
-                            padding: '6px 10px',
-                            border: '1px solid #333',
-                            marginLeft: '4px'
-                          }}>
-                            <input
-                              type="text"
-                              value={shareUrl}
-                              readOnly
-                              onClick={(e) => e.target.select()}
-                              style={{
-                                width: '180px',
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#8b5cf6',
-                                fontSize: '12px',
-                                fontFamily: 'monospace',
-                                outline: 'none'
-                              }}
-                            />
-                            <button
-                              onClick={async () => {
-                                await navigator.clipboard.writeText(shareUrl);
-                                setShareCopied(true);
-                                setTimeout(() => setShareCopied(false), 2000);
-                              }}
-                              style={{
-                                padding: '4px 8px',
-                                fontSize: '11px',
-                                background: shareCopied ? '#22c55e' : '#333',
-                                border: 'none',
-                                borderRadius: '4px',
-                                color: '#fff',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              {shareCopied ? '✓' : '📋'}
-                            </button>
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>
@@ -1192,15 +1159,12 @@
                       </div>
                       
                       {/* Controls */}
-                      <div 
-                        className="audio-controls"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '16px'
-                        }}
-                      >
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '16px'
+                      }}>
                         <span style={{ fontSize: '12px', color: '#666', minWidth: '40px' }}>
                           {formatTime(audioCurrentTime)}
                         </span>
@@ -1286,15 +1250,12 @@
                 </div>
 
                 {/* Report Cards Grid */}
-                <div 
-                  className="report-cards"
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                    gap: '16px',
-                    marginBottom: '24px'
-                  }}
-                >
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gap: '16px',
+                  marginBottom: '24px'
+                }}>
                   <ReportCard
                     title="Buzzword Count"
                     score={results.buzzwords.total}
@@ -1325,17 +1286,14 @@
                 </div>
 
                 {/* Additional Stats */}
-                <div 
-                  className="stats-grid"
-                  style={{
-                    background: '#1a1a2e',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                    gap: '16px'
-                  }}
-                >
+                <div style={{
+                  background: '#1a1a2e',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                  gap: '16px'
+                }}>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ color: '#888', fontSize: '12px', marginBottom: '4px' }}>Word Count</div>
                     <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{results.wordCount}</div>
