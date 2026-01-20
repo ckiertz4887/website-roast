@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
 const path = require('path');
+const { createCanvas } = require('@napi-rs/canvas');
 
 // --------------------
 // CONFIGURATION
@@ -452,7 +453,7 @@ app.get('/r/:id', async (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Generate OG image for shared roasts
+// Generate OG image for shared roasts (PNG format for LinkedIn compatibility)
 app.get('/api/og/:id', async (req, res) => {
   const { id } = req.params;
   
@@ -488,42 +489,71 @@ app.get('/api/og/:id', async (req, res) => {
     }
   }
   
-  // Generate a simple SVG image
-  const svg = isDefault ? `
-    <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#0f0f1a"/>
-          <stop offset="50%" style="stop-color:#1a1a2e"/>
-          <stop offset="100%" style="stop-color:#16213e"/>
-        </linearGradient>
-      </defs>
-      <rect width="1200" height="630" fill="url(#bg)"/>
-      <text x="600" y="200" font-family="system-ui, sans-serif" font-size="80" fill="#ff6b6b" text-anchor="middle">🔥 Website Roaster 🔥</text>
-      <text x="600" y="320" font-family="system-ui, sans-serif" font-size="42" fill="#ffffff" text-anchor="middle">How Cringe Is Your Website?</text>
-      <text x="600" y="420" font-family="system-ui, sans-serif" font-size="32" fill="#888888" text-anchor="middle">AI-powered roasts of corporate buzzword salad</text>
-      <text x="600" y="520" font-family="system-ui, sans-serif" font-size="28" fill="#8b5cf6" text-anchor="middle">wroast.co</text>
-    </svg>
-  ` : `
-    <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#0f0f1a"/>
-          <stop offset="50%" style="stop-color:#1a1a2e"/>
-          <stop offset="100%" style="stop-color:#16213e"/>
-        </linearGradient>
-      </defs>
-      <rect width="1200" height="630" fill="url(#bg)"/>
-      <text x="600" y="180" font-family="system-ui, sans-serif" font-size="72" fill="#ff6b6b" text-anchor="middle">🔥 ROASTED 🔥</text>
-      <text x="600" y="300" font-family="system-ui, sans-serif" font-size="64" fill="#ffffff" text-anchor="middle" font-weight="bold">${domain}</text>
-      <text x="600" y="400" font-family="system-ui, sans-serif" font-size="48" fill="#888888" text-anchor="middle">Corporate Cringe Grade:</text>
-      <text x="600" y="520" font-family="system-ui, sans-serif" font-size="120" fill="${grade === 'A' ? '#22c55e' : grade === 'B' ? '#84cc16' : grade === 'C' ? '#eab308' : grade === 'D' ? '#f97316' : '#ef4444'}" text-anchor="middle" font-weight="bold">${grade}</text>
-    </svg>
-  `;
+  // Create PNG canvas (1200x630 for LinkedIn)
+  const canvas = createCanvas(1200, 630);
+  const ctx = canvas.getContext('2d');
   
-  res.setHeader('Content-Type', 'image/svg+xml');
+  // Background gradient
+  const gradient = ctx.createLinearGradient(0, 0, 1200, 630);
+  gradient.addColorStop(0, '#0f0f1a');
+  gradient.addColorStop(0.5, '#1a1a2e');
+  gradient.addColorStop(1, '#16213e');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 1200, 630);
+  
+  if (isDefault) {
+    // Default homepage image
+    ctx.font = 'bold 72px sans-serif';
+    ctx.fillStyle = '#ff6b6b';
+    ctx.textAlign = 'center';
+    ctx.fillText('🔥 Website Roaster 🔥', 600, 220);
+    
+    ctx.font = '42px sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('How Cringe Is Your Website?', 600, 310);
+    
+    ctx.font = '32px sans-serif';
+    ctx.fillStyle = '#888888';
+    ctx.fillText('AI-powered roasts of corporate buzzword salad', 600, 400);
+    
+    ctx.font = '28px sans-serif';
+    ctx.fillStyle = '#8b5cf6';
+    ctx.fillText('wroast.co', 600, 500);
+  } else {
+    // Shared roast image
+    ctx.font = 'bold 72px sans-serif';
+    ctx.fillStyle = '#ff6b6b';
+    ctx.textAlign = 'center';
+    ctx.fillText('🔥 ROASTED 🔥', 600, 150);
+    
+    // Truncate long domains
+    const displayDomain = domain.length > 25 ? domain.substring(0, 22) + '...' : domain;
+    ctx.font = 'bold 64px sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(displayDomain, 600, 280);
+    
+    ctx.font = '48px sans-serif';
+    ctx.fillStyle = '#888888';
+    ctx.fillText('Corporate Cringe Grade:', 600, 380);
+    
+    // Grade with color
+    const gradeColors = {
+      'A': '#22c55e',
+      'B': '#84cc16',
+      'C': '#eab308',
+      'D': '#f97316',
+      'F': '#ef4444',
+      '?': '#888888'
+    };
+    ctx.font = 'bold 120px sans-serif';
+    ctx.fillStyle = gradeColors[grade] || '#888888';
+    ctx.fillText(grade, 600, 530);
+  }
+  
+  // Send as PNG
+  res.setHeader('Content-Type', 'image/png');
   res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
-  res.send(svg);
+  res.send(canvas.toBuffer('image/png'));
 });
 
 // Serve index.html for all other routes (SPA support)
