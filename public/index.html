@@ -1021,28 +1021,6 @@
                     </h2>
                     {(speechSupported) && (
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                        {!audioUrl && (
-                          <button
-                            onClick={speakRoast}
-                            disabled={audioLoading}
-                            style={{
-                              padding: '8px 16px',
-                              fontSize: '14px',
-                              fontWeight: 'bold',
-                              background: audioLoading ? '#333' : 'linear-gradient(90deg, #8b5cf6, #6366f1)',
-                              border: 'none',
-                              borderRadius: '8px',
-                              color: '#fff',
-                              cursor: audioLoading ? 'wait' : 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              transition: 'all 0.2s'
-                            }}
-                          >
-                            {audioLoading ? '⏳ Generating...' : '🎙️ Generate Audio (it\'s worth it)'}
-                          </button>
-                        )}
                         <button
                           onClick={shareRoast}
                           disabled={shareLoading}
