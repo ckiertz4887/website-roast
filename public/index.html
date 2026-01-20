@@ -345,6 +345,7 @@
       const [audioBase64, setAudioBase64] = useState(null);
       const [loadingStage, setLoadingStage] = useState('analyzing');
       const [shouldAutoGenerateAudio, setShouldAutoGenerateAudio] = useState(false);
+      const [showTranscript, setShowTranscript] = useState(false);
       const audioRef = useRef(null);
       const canvasRef = useRef(null);
       const analyserRef = useRef(null);
@@ -1043,44 +1044,12 @@
                           </button>
                         )}
                         <button
-                          onClick={copyRoastToClipboard}
-                          style={{
-                            padding: '8px 12px',
-                            fontSize: '14px',
-                            background: copySuccess ? '#22c55e' : '#2a2a4e',
-                            border: '1px solid #444',
-                            borderRadius: '8px',
-                            color: '#fff',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                        >
-                          {copySuccess ? '✓ Copied!' : '📋 Copy'}
-                        </button>
-                        {audioUrl && (
-                          <button
-                            onClick={downloadAudio}
-                            style={{
-                              padding: '8px 12px',
-                              fontSize: '14px',
-                              background: '#2a2a4e',
-                              border: '1px solid #444',
-                              borderRadius: '8px',
-                              color: '#fff',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s'
-                            }}
-                          >
-                            💾 Download MP3
-                          </button>
-                        )}
-                        <button
                           onClick={shareRoast}
                           disabled={shareLoading}
                           style={{
                             padding: '8px 12px',
                             fontSize: '14px',
-                            background: shareCopied ? '#22c55e' : shareUrl ? '#8b5cf6' : '#2a2a4e',
+                            background: shareCopied ? '#22c55e' : shareUrl ? '#8b5cf6' : '#8b5cf6',
                             border: '1px solid #444',
                             borderRadius: '8px',
                             color: '#fff',
@@ -1088,8 +1057,53 @@
                             transition: 'all 0.2s'
                           }}
                         >
-                          {shareLoading ? '⏳ Creating...' : shareCopied ? '✓ Link Copied!' : shareUrl ? '🔗 Copy Link Again' : '🔗 Share'}
+                          {shareLoading ? '⏳ Creating...' : shareCopied ? '✓ Copied!' : '🔗 Copy Link'}
                         </button>
+                        {shareUrl && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: '#0f0f1a',
+                            borderRadius: '6px',
+                            padding: '6px 10px',
+                            border: '1px solid #333'
+                          }}>
+                            <input
+                              type="text"
+                              value={shareUrl}
+                              readOnly
+                              onClick={(e) => e.target.select()}
+                              style={{
+                                width: '180px',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#8b5cf6',
+                                fontSize: '12px',
+                                fontFamily: 'monospace',
+                                outline: 'none'
+                              }}
+                            />
+                            <button
+                              onClick={async () => {
+                                await navigator.clipboard.writeText(shareUrl);
+                                setShareCopied(true);
+                                setTimeout(() => setShareCopied(false), 2000);
+                              }}
+                              style={{
+                                padding: '4px 8px',
+                                fontSize: '11px',
+                                background: shareCopied ? '#22c55e' : '#333',
+                                border: 'none',
+                                borderRadius: '4px',
+                                color: '#fff',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              {shareCopied ? '✓' : '📋'}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1244,13 +1258,44 @@
                       ⚠️ {ttsError}
                     </div>
                   )}
-                  <div style={{ 
-                    color: '#ccc', 
-                    lineHeight: '1.7',
-                    whiteSpace: 'pre-wrap'
-                  }}>
-                    {stripAudioTags(roast)}
-                  </div>
+                  
+                  {/* Collapsible Transcript */}
+                  <button
+                    onClick={() => setShowTranscript(!showTranscript)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#888',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      padding: '8px 0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span style={{ 
+                      transform: showTranscript ? 'rotate(90deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.2s',
+                      display: 'inline-block'
+                    }}>▶</span>
+                    {showTranscript ? 'Hide transcript' : 'Show full transcript'}
+                  </button>
+                  
+                  {showTranscript && (
+                    <div style={{ 
+                      color: '#ccc', 
+                      lineHeight: '1.7',
+                      whiteSpace: 'pre-wrap',
+                      marginTop: '12px',
+                      padding: '16px',
+                      background: '#0f0f1a',
+                      borderRadius: '8px',
+                      border: '1px solid #333'
+                    }}>
+                      {stripAudioTags(roast)}
+                    </div>
+                  )}
                 </div>
 
                 {/* Report Cards Grid */}
