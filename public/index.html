@@ -654,6 +654,19 @@
       const shareRoast = async () => {
         if (!results || !roast) return;
         
+        // If we're viewing a shared roast, just copy the current URL
+        if (isSharedView) {
+          try {
+            await navigator.clipboard.writeText(window.location.href);
+            setShareCopied(true);
+            setShareUrl(window.location.href);
+            setTimeout(() => setShareCopied(false), 2000);
+          } catch (err) {
+            console.error('Copy error:', err);
+          }
+          return;
+        }
+        
         // If we already have a share URL, just copy it
         if (shareUrl) {
           try {
