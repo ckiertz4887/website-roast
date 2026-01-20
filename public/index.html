@@ -392,12 +392,32 @@
           setResults(data.results);
           setRoast(data.roast);
           
-          // If there's audio, load it
+          // If there's audio, load it and set up player
           if (data.audio) {
             const audioBlob = base64ToBlob(data.audio, 'audio/mpeg');
-            const audioUrl = URL.createObjectURL(audioBlob);
-            setAudioUrl(audioUrl);
+            const newAudioUrl = URL.createObjectURL(audioBlob);
+            setAudioUrl(newAudioUrl);
             setAudioBase64(data.audio);
+            
+            // Set up audio element for player controls
+            const audio = new Audio(newAudioUrl);
+            audioRef.current = audio;
+            
+            audio.onloadedmetadata = () => {
+              setAudioDuration(audio.duration);
+            };
+            
+            audio.ontimeupdate = () => {
+              setAudioCurrentTime(audio.currentTime);
+            };
+            
+            audio.onplay = () => setIsAudioPlaying(true);
+            audio.onpause = () => setIsAudioPlaying(false);
+            
+            audio.onended = () => {
+              setIsSpeaking(false);
+              setIsAudioPlaying(false);
+            };
           }
         } catch (e) {
           setError('This roast could not be found. It may have expired or been deleted.');
@@ -634,6 +654,18 @@
       const shareRoast = async () => {
         if (!results || !roast) return;
         
+        // If we already have a share URL, just copy it
+        if (shareUrl) {
+          try {
+            await navigator.clipboard.writeText(shareUrl);
+            setShareCopied(true);
+            setTimeout(() => setShareCopied(false), 2000);
+          } catch (err) {
+            console.error('Copy error:', err);
+          }
+          return;
+        }
+        
         setShareLoading(true);
         try {
           const response = await fetch('/api/share', {
@@ -657,7 +689,7 @@
           // Copy to clipboard
           await navigator.clipboard.writeText(data.shareUrl);
           setShareCopied(true);
-          setTimeout(() => setShareCopied(false), 3000);
+          setTimeout(() => setShareCopied(false), 2000);
         } catch (err) {
           console.error('Share error:', err);
           setTtsError('Failed to create share link');
