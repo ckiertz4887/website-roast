@@ -382,9 +382,148 @@ app.get('/api/share/:id', async (req, res) => {
   }
 });
 
-// Serve shared roast page
-app.get('/r/:id', (req, res) => {
+// Serve shared roast page with dynamic meta tags
+app.get('/r/:id', async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    // Fetch the roast data to get the URL being roasted
+    const data = await redisGet(`roast:${id}`);
+    
+    if (data && data.url) {
+      // Extract domain from the roasted URL for the title
+      let domain = 'a website';
+      try {
+        domain = new URL(data.url).hostname.replace('www.', '');
+      } catch (e) {}
+      
+      // Get a short preview of the roast (first 150 chars, strip audio tags)
+      const roastPreview = data.roast
+        .replace(/\[(?:sighs?|chuckles?|laughs?|sarcastically|dramatically|pause|sassy|sarcastic|comedic)[^\]]*\]/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 150) + '...';
+      
+      // Read the index.html and inject dynamic meta tags
+      const fs = require('fs');
+      let html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+      
+      // Replace the meta tags
+      html = html.replace(
+        /<title>.*?<\/title>/,
+        `<title>🔥 ${domain} just got roasted!</title>`
+      );
+      html = html.replace(
+        /<meta property="og:title" content=".*?">/,
+        `<meta property="og:title" content="🔥 ${domain} just got roasted!">`
+      );
+      html = html.replace(
+        /<meta property="og:description" content=".*?">/,
+        `<meta property="og:description" content="${roastPreview.replace(/"/g, '&quot;')}">`
+      );
+      html = html.replace(
+        /<meta property="og:url" content=".*?">/,
+        `<meta property="og:url" content="https://www.wroast.co/r/${id}">`
+      );
+      html = html.replace(
+        /<meta property="og:image" content=".*?">/,
+        `<meta property="og:image" content="https://www.wroast.co/api/og/${id}">`
+      );
+      html = html.replace(
+        /<meta name="twitter:title" content=".*?">/,
+        `<meta name="twitter:title" content="🔥 ${domain} just got roasted!">`
+      );
+      html = html.replace(
+        /<meta name="twitter:description" content=".*?">/,
+        `<meta name="twitter:description" content="${roastPreview.replace(/"/g, '&quot;')}">`
+      );
+      html = html.replace(
+        /<meta name="twitter:image" content=".*?">/,
+        `<meta name="twitter:image" content="https://www.wroast.co/api/og/${id}">`
+      );
+      
+      return res.send(html);
+    }
+  } catch (e) {
+    console.error('[Share Page] Error fetching roast data:', e);
+  }
+  
+  // Fallback to regular index.html
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Generate OG image for shared roasts
+app.get('/api/og/:id', async (req, res) => {
+  const { id } = req.params;
+  
+  let domain = 'Your Website';
+  let grade = '?';
+  let isDefault = id === 'default';
+  
+  if (!isDefault) {
+    try {
+      const data = await redisGet(`roast:${id}`);
+      
+      if (data) {
+        try {
+          domain = new URL(data.url).hostname.replace('www.', '');
+        } catch (e) {}
+        
+        // Calculate grade based on results
+        if (data.results) {
+          const score = Math.min(100, 
+            (data.results.buzzwords?.total || 0) * 3 + 
+            (data.results.vagueClaims?.total || 0) * 5 + 
+            (data.results.ctas?.total || 0) * 2
+          );
+          if (score < 20) grade = 'A';
+          else if (score < 40) grade = 'B';
+          else if (score < 60) grade = 'C';
+          else if (score < 80) grade = 'D';
+          else grade = 'F';
+        }
+      }
+    } catch (e) {
+      console.error('[OG Image] Error:', e);
+    }
+  }
+  
+  // Generate a simple SVG image
+  const svg = isDefault ? `
+    <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#0f0f1a"/>
+          <stop offset="50%" style="stop-color:#1a1a2e"/>
+          <stop offset="100%" style="stop-color:#16213e"/>
+        </linearGradient>
+      </defs>
+      <rect width="1200" height="630" fill="url(#bg)"/>
+      <text x="600" y="200" font-family="system-ui, sans-serif" font-size="80" fill="#ff6b6b" text-anchor="middle">🔥 Website Roaster 🔥</text>
+      <text x="600" y="320" font-family="system-ui, sans-serif" font-size="42" fill="#ffffff" text-anchor="middle">How Cringe Is Your Website?</text>
+      <text x="600" y="420" font-family="system-ui, sans-serif" font-size="32" fill="#888888" text-anchor="middle">AI-powered roasts of corporate buzzword salad</text>
+      <text x="600" y="520" font-family="system-ui, sans-serif" font-size="28" fill="#8b5cf6" text-anchor="middle">wroast.co</text>
+    </svg>
+  ` : `
+    <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#0f0f1a"/>
+          <stop offset="50%" style="stop-color:#1a1a2e"/>
+          <stop offset="100%" style="stop-color:#16213e"/>
+        </linearGradient>
+      </defs>
+      <rect width="1200" height="630" fill="url(#bg)"/>
+      <text x="600" y="180" font-family="system-ui, sans-serif" font-size="72" fill="#ff6b6b" text-anchor="middle">🔥 ROASTED 🔥</text>
+      <text x="600" y="300" font-family="system-ui, sans-serif" font-size="64" fill="#ffffff" text-anchor="middle" font-weight="bold">${domain}</text>
+      <text x="600" y="400" font-family="system-ui, sans-serif" font-size="48" fill="#888888" text-anchor="middle">Corporate Cringe Grade:</text>
+      <text x="600" y="520" font-family="system-ui, sans-serif" font-size="120" fill="${grade === 'A' ? '#22c55e' : grade === 'B' ? '#84cc16' : grade === 'C' ? '#eab308' : grade === 'D' ? '#f97316' : '#ef4444'}" text-anchor="middle" font-weight="bold">${grade}</text>
+    </svg>
+  `;
+  
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+  res.send(svg);
 });
 
 // Serve index.html for all other routes (SPA support)
