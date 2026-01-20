@@ -11,10 +11,18 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^0.1.88",
+    "canvas": "^3.2.1",
     "cors": "^2.8.5",
     "express": "^4.18.2"
   },
-  "keywords": ["website", "roaster", "ai", "elevenlabs", "anthropic"],
+  "keywords": [
+    "website",
+    "roaster",
+    "ai",
+    "elevenlabs",
+    "anthropic"
+  ],
   "author": "",
   "license": "MIT"
 }
