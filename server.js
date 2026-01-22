@@ -428,7 +428,7 @@ app.get('/r/:id', async (req, res) => {
       );
       html = html.replace(
         /<meta property="og:image" content=".*?">/,
-        `<meta property="og:image" content="https://www.wroast.co/api/og/${id}">`
+        `<meta property="og:image" content="https://www.wroast.co/og-preview.png">`
       );
       html = html.replace(
         /<meta name="twitter:title" content=".*?">/,
@@ -440,7 +440,7 @@ app.get('/r/:id', async (req, res) => {
       );
       html = html.replace(
         /<meta name="twitter:image" content=".*?">/,
-        `<meta name="twitter:image" content="https://www.wroast.co/api/og/${id}">`
+        `<meta name="twitter:image" content="https://www.wroast.co/og-preview.png">`
       );
       
       return res.send(html);
