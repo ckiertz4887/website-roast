@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-K07KHPP18P"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-K07KHPP18P');
+  </script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Website Roaster - AI-Powered Corporate Buzzword Detector</title>
@@ -9,9 +18,9 @@
   <!-- Open Graph / Facebook / LinkedIn -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.wroast.co/">
-  <meta property="og:title" content="🔥 Website Roaster - Website Analysis Analyzer">
+  <meta property="og:title" content="🔥 Website Roaster - How Cringe Is Your Website?">
   <meta property="og:description" content="AI-powered roasts of corporate buzzword salad. Find out if your website sounds like every other 'innovative, industry-leading solution' out there.">
-  <meta property="og:image" content="https://www.wroast.co/og-image.png">
+  <meta property="og:image" content="https://www.wroast.co/og-preview.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   
@@ -20,7 +29,7 @@
   <meta name="twitter:url" content="https://www.wroast.co/">
   <meta name="twitter:title" content="🔥 Website Roaster - How Cringe Is Your Website?">
   <meta name="twitter:description" content="AI-powered roasts of corporate buzzword salad. Find out if your website sounds like every other 'innovative, industry-leading solution' out there.">
-  <meta name="twitter:image" content="https://www.wroast.co/api/og/default">
+  <meta name="twitter:image" content="https://www.wroast.co/og-preview.png">
   
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
   <link rel="canonical" href="https://www.wroast.co/">
@@ -60,21 +69,17 @@
       "Evaluating their 'innovative solutions'...",
       "Cross-referencing with LinkedIn dictionary...",
       "Checking if they really are 'industry-leading'...",
-      "Parsing the jargon through our BS filter...",
-      "Interviewing their CTAs... they seem desperate...",
-      "Reviewing their exclamation point budget...",
-      "Assessing paradigm shift density...",
-      "Examining their commitment to 'excellence'...",
-      "Translating corporate to English...",
-      "Consulting the ancient scrolls of marketing...",
-      "Asking ChatGPT if this was written by ChatGPT...",
-      "Measuring the echo in their chamber...",
-      "Calibrating our cynicism sensors...",
-      "Checking their vague promise to specificity ratio...",
-      "Decoding the meaning of 'holistic approach'...",
-      "Investigating claims of 'seamless integration'...",
-      "Questioning their definition of 'world-class'...",
-      "Running empathy.exe... file not found...",
+    ];
+
+    const ROASTING_MESSAGES = [
+      "Crafting the perfect roast...",
+      "Finding the spiciest takes...",
+      "Sharpening our wit...",
+      "Consulting the council of sarcasm...",
+      "Brewing a fresh batch of burns...",
+      "Polishing the zingers...",
+      "Loading maximum snark...",
+      "Preparing constructive destruction...",
     ];
 
     const TTS_LOADING_MESSAGES = [
@@ -84,16 +89,6 @@
       "Preparing to roast audibly...",
       "Converting cringe to audio...",
       "Generating dramatic pauses...",
-      "Infusing appropriate levels of disdain...",
-      "Rehearsing the eye-roll inflections...",
-      "Calibrating snark-to-speech ratio...",
-      "Summoning the voice of a thousand LinkedIn posts...",
-      "Teaching AI to be disappointed...",
-      "Brewing contempt into audio waves...",
-      "Converting buzzwords to audible sighs...",
-      "Generating professional disdain...",
-      "Infusing audio with existential weariness...",
-      "Tuning the cynicism frequency...",
     ];
 
     function stripAudioTags(text) {
@@ -101,220 +96,104 @@
       return text.replace(/\[(?:sighs?|chuckles?|laughs?|sarcastically|dramatically|pause|sassy|sarcastic|comedic)[^\]]*\]/gi, '').replace(/\s+/g, ' ').trim();
     }
 
-    function ProgressIndicator({ stage, loadingMessages, ttsLoadingMessage }) {
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function ProgressIndicator({ stage, loadingMessages, roastingMessages, ttsLoadingMessage }) {
       const stages = [
         { key: 'analyzing', label: 'Analyzing website', icon: '🔍' },
         { key: 'roasting', label: 'Generating roast', icon: '🔥' },
         { key: 'audio', label: 'Creating audio', icon: '🎙️' }
       ];
-      
       let currentIndex = stages.findIndex(s => s.key === stage);
       if (currentIndex === -1) currentIndex = 0;
+      const currentMessages = stage === 'roasting' ? roastingMessages : loadingMessages;
       
       return (
         <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            gap: '8px',
-            marginBottom: '32px',
-            flexWrap: 'wrap'
-          }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '32px', flexWrap: 'wrap' }}>
             {stages.map((s, index) => {
               const isComplete = index < currentIndex;
               const isCurrent = index === currentIndex;
               return (
                 <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 16px',
+                    display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px',
                     background: isComplete ? '#22c55e22' : isCurrent ? '#8b5cf622' : '#1a1a2e',
                     border: '2px solid ' + (isComplete ? '#22c55e' : isCurrent ? '#8b5cf6' : '#333'),
                     borderRadius: '24px'
                   }}>
                     <span style={{ fontSize: '16px' }}>{isComplete ? '✓' : s.icon}</span>
-                    <span style={{ 
-                      color: isComplete ? '#22c55e' : isCurrent ? '#fff' : '#666',
-                      fontSize: '14px',
-                      fontWeight: isCurrent ? 'bold' : 'normal'
-                    }}>{s.label}</span>
+                    <span style={{ color: isComplete ? '#22c55e' : isCurrent ? '#fff' : '#666', fontSize: '14px', fontWeight: isCurrent ? 'bold' : 'normal' }}>{s.label}</span>
                   </div>
-                  {index < stages.length - 1 && (
-                    <div style={{ width: '24px', height: '2px', background: isComplete ? '#22c55e' : '#333' }} />
-                  )}
+                  {index < stages.length - 1 && <div style={{ width: '24px', height: '2px', background: isComplete ? '#22c55e' : '#333' }} />}
                 </div>
               );
             })}
           </div>
-          
-          <div style={{ fontSize: '48px', marginBottom: '16px', animation: 'spin 2s linear infinite' }}>
-            {stages[currentIndex].icon}
-          </div>
-          
+          <div style={{ fontSize: '48px', marginBottom: '16px', animation: 'spin 2s linear infinite' }}>{stages[currentIndex].icon}</div>
           {stage === 'audio' ? (
             <p style={{ color: '#fff', fontSize: '16px', margin: '8px 0' }}>{ttsLoadingMessage}</p>
           ) : (
             <div style={{ maxHeight: '150px', overflow: 'hidden', marginBottom: '16px' }}>
-              {loadingMessages.map((msg, index) => (
-                <p key={index} style={{ 
-                  color: index === loadingMessages.length - 1 ? '#fff' : '#666', 
-                  fontSize: index === loadingMessages.length - 1 ? '16px' : '13px',
-                  margin: '8px 0',
-                  opacity: index === loadingMessages.length - 1 ? 1 : 0.6
-                }}>
-                  {index === loadingMessages.length - 1 ? msg : '✓ ' + msg}
+              {currentMessages.map((msg, index) => (
+                <p key={index} style={{ color: index === currentMessages.length - 1 ? '#fff' : '#666', fontSize: index === currentMessages.length - 1 ? '16px' : '13px', margin: '8px 0', opacity: index === currentMessages.length - 1 ? 1 : 0.6 }}>
+                  {index === currentMessages.length - 1 ? msg : '✓ ' + msg}
                 </p>
               ))}
             </div>
           )}
-          
-          <p style={{ color: '#666', fontSize: '14px', marginTop: '16px' }}>
-            {stage === 'audio' ? "Almost there! The best part is coming..." : "This might take a moment. The site has a lot to answer for."}
-          </p>
+          <p style={{ color: '#666', fontSize: '14px', marginTop: '16px' }}>{stage === 'audio' ? "Almost there!" : "This might take a moment."}</p>
         </div>
       );
     }
 
-    const BUZZWORDS = [
-      'synergy', 'leverage', 'disrupt', 'disrupting', 'disruptive', 'innovative', 'innovation',
-      'scalable', 'scale', 'ai-powered', 'ai powered', 'machine learning', 'blockchain',
-      'best-in-class', 'world-class', 'industry-leading', 'cutting-edge', 'cutting edge',
-      'next-gen', 'next generation', 'revolutionary', 'game-changing', 'game changer',
-      'paradigm', 'ecosystem', 'holistic', 'robust', 'seamless', 'frictionless',
-      'empower', 'empowering', 'transform', 'transformative', 'transformation',
-      'agile', 'dynamic', 'solutions', 'optimize', 'optimization', 'streamline',
-      'actionable', 'insights', 'data-driven', 'proactive', 'synergize', 'ideate',
-      'pivot', 'growth hacking', 'thought leader', 'value-add', 'value proposition',
-      'mission-critical', 'best practices', 'core competency', 'move the needle',
-      'low-hanging fruit', 'deep dive', 'circle back', 'touch base', 'bandwidth',
-      'stakeholder', 'deliverables', 'roi', 'kpi', 'saas', 'b2b', 'b2c',
-      'customer-centric', 'user-centric', 'end-to-end', 'turnkey', 'plug-and-play',
-      'future-proof', 'bleeding edge', 'state-of-the-art', 'proprietary', 'bespoke'
-    ];
+    const BUZZWORDS = ['synergy','leverage','disrupt','innovative','scalable','ai-powered','revolutionary','game-changing','cutting-edge','best-in-class','world-class','next-gen','robust','holistic','paradigm','ecosystem','seamless','frictionless','agile','pivot','digital transformation','deep dive','value-add','stakeholder','empower','data-driven','actionable insights','thought leader','industry-leading'];
+    const VAGUE_CLAIMS = ['industry leader','market leader','trusted by','award-winning','best in class','unparalleled','innovative solutions','proven track record','dedicated team','passionate about','customer satisfaction','easy to use','years of experience'];
+    const CTAS = ['sign up','get started','learn more','book a demo','contact us','subscribe','buy now','limited time','click here','transform your','unlock','discover'];
 
-    const VAGUE_CLAIMS = [
-      'world-class', 'industry-leading', 'best-in-class', 'innovative solutions',
-      'trusted by thousands', 'leading provider', 'premier', 'top-rated',
-      'award-winning', 'unparalleled', 'unmatched', 'superior', 'exceptional',
-      'outstanding', 'remarkable', 'extraordinary', 'world-renowned', 'globally recognized'
-    ];
-
-    const CTAS = [
-      'get started', 'book a demo', 'schedule a call', 'contact us', 'learn more',
-      'sign up', 'try free', 'start free', 'request demo', 'talk to sales',
-      'see pricing', 'watch demo', 'download now', 'join now', 'subscribe',
-      'claim your', 'unlock', 'discover', 'explore', 'see how'
-    ];
-
-    function analyzeContent(text) {
-      const buzzwordMatches = {};
-      let buzzwordTotal = 0;
-      BUZZWORDS.forEach(word => {
-        const regex = new RegExp(`\\b${word.replace(/-/g, '[- ]?')}\\b`, 'gi');
-        const matches = (text.match(regex) || []).length;
-        if (matches > 0) {
-          buzzwordMatches[word] = matches;
-          buzzwordTotal += matches;
-        }
-      });
-
-      const vagueMatches = {};
-      let vagueTotal = 0;
-      VAGUE_CLAIMS.forEach(claim => {
-        const regex = new RegExp(claim.replace(/-/g, '[- ]?'), 'gi');
-        const matches = (text.match(regex) || []).length;
-        if (matches > 0) {
-          vagueMatches[claim] = matches;
-          vagueTotal += matches;
-        }
-      });
-
-      const ctaMatches = {};
-      let ctaTotal = 0;
-      CTAS.forEach(cta => {
-        const regex = new RegExp(cta, 'gi');
-        const matches = (text.match(regex) || []).length;
-        if (matches > 0) {
-          ctaMatches[cta] = matches;
-          ctaTotal += matches;
-        }
-      });
-
+    function analyzeText(text) {
+      if (!text) return { buzzwords: { total: 0, matches: {} }, vagueClaims: { total: 0, matches: {} }, ctas: { total: 0, matches: {} }, exclamationCount: 0, wordCount: 0, avgWordLength: 0, avgSentenceLength: 0, weYouRatio: "0" };
+      const countMatches = (list) => {
+        const matches = {};
+        list.forEach(item => {
+          const regex = new RegExp('\\b' + item.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '\\b', 'gi');
+          const found = (text.match(regex) || []).length;
+          if (found > 0) matches[item] = found;
+        });
+        return { total: Object.values(matches).reduce((a, b) => a + b, 0), matches };
+      };
       const words = text.split(/\s+/).filter(w => w.length > 0);
       const wordCount = words.length;
-      const avgWordLength = words.reduce((sum, w) => sum + w.length, 0) / wordCount || 0;
+      const totalChars = words.reduce((sum, w) => sum + w.replace(/[^a-zA-Z]/g, '').length, 0);
+      const avgWordLength = wordCount > 0 ? (totalChars / wordCount).toFixed(1) : 0;
       const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-      const avgSentenceLength = wordCount / sentences.length || 0;
-      const exclamationCount = (text.match(/!/g) || []).length;
-      const weCount = (text.match(/\bwe\b|\bour\b|\bus\b/gi) || []).length;
-      const youCount = (text.match(/\byou\b|\byour\b/gi) || []).length;
-
-      return {
-        buzzwords: { matches: buzzwordMatches, total: buzzwordTotal },
-        vagueClaims: { matches: vagueMatches, total: vagueTotal },
-        ctas: { matches: ctaMatches, total: ctaTotal },
-        wordCount,
-        avgWordLength: avgWordLength.toFixed(1),
-        avgSentenceLength: avgSentenceLength.toFixed(1),
-        exclamationCount,
-        weCount,
-        youCount,
-        weYouRatio: youCount > 0 ? (weCount / youCount).toFixed(2) : weCount > 0 ? '∞' : '0'
-      };
-    }
-
-    function getGrade(score, thresholds) {
-      if (score <= thresholds.a) return { grade: 'A', color: '#22c55e', label: 'Refreshingly honest' };
-      if (score <= thresholds.b) return { grade: 'B', color: '#84cc16', label: 'Mostly tolerable' };
-      if (score <= thresholds.c) return { grade: 'C', color: '#eab308', label: 'Corporate cringe detected' };
-      if (score <= thresholds.d) return { grade: 'D', color: '#f97316', label: 'Buzzword salad' };
-      return { grade: 'F', color: '#ef4444', label: 'LinkedIn personified' };
+      const avgSentenceLength = sentences.length > 0 ? Math.round(wordCount / sentences.length) : 0;
+      const weCount = (text.match(/\b(we|our|us)\b/gi) || []).length;
+      const youCount = (text.match(/\b(you|your|yours)\b/gi) || []).length;
+      const weYouRatio = youCount > 0 ? (weCount / youCount).toFixed(1) : weCount > 0 ? "∞" : "0";
+      return { buzzwords: countMatches(BUZZWORDS), vagueClaims: countMatches(VAGUE_CLAIMS), ctas: countMatches(CTAS), exclamationCount: (text.match(/!/g) || []).length, wordCount, avgWordLength, avgSentenceLength, weYouRatio };
     }
 
     function ReportCard({ title, score, thresholds, details, icon }) {
-      const { grade, color, label } = getGrade(score, thresholds);
-      
+      let grade, gradeColor;
+      if (score <= thresholds.a) { grade = 'A'; gradeColor = '#22c55e'; }
+      else if (score <= thresholds.b) { grade = 'B'; gradeColor = '#84cc16'; }
+      else if (score <= thresholds.c) { grade = 'C'; gradeColor = '#eab308'; }
+      else if (score <= thresholds.d) { grade = 'D'; gradeColor = '#f97316'; }
+      else { grade = 'F'; gradeColor = '#ef4444'; }
       return (
-        <div style={{
-          background: '#1a1a2e',
-          borderRadius: '12px',
-          padding: '20px',
-          border: `2px solid ${color}33`
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-            <div>
-              <div style={{ fontSize: '14px', color: '#888', marginBottom: '4px' }}>{icon} {title}</div>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color }}>{score}</div>
-            </div>
-            <div style={{
-              background: color,
-              color: '#000',
-              padding: '8px 16px',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              fontSize: '20px'
-            }}>
-              {grade}
-            </div>
+        <div style={{ background: '#1a1a2e', borderRadius: '16px', padding: '20px', border: '1px solid #2a2a4e' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <span style={{ fontSize: '14px', color: '#888' }}>{icon} {title}</span>
+            <span style={{ fontSize: '24px', fontWeight: 'bold', color: gradeColor, textShadow: '0 0 20px ' + gradeColor + '44' }}>{grade}</span>
           </div>
-          <div style={{ fontSize: '13px', color: '#aaa', marginBottom: '8px' }}>{label}</div>
+          <div style={{ fontSize: '36px', fontWeight: 'bold', marginBottom: '8px' }}>{score}</div>
           {details && details.length > 0 && (
-            <div style={{ fontSize: '12px', color: '#666', marginTop: '12px' }}>
-              <div style={{ marginBottom: '4px', color: '#888' }}>Top offenders:</div>
-              {details.slice(0, 5).map(([word, count]) => (
-                <span key={word} style={{
-                  display: 'inline-block',
-                  background: '#2a2a4e',
-                  padding: '2px 8px',
-                  borderRadius: '4px',
-                  marginRight: '4px',
-                  marginBottom: '4px'
-                }}>
-                  {word} ({count})
-                </span>
-              ))}
+            <div style={{ fontSize: '12px', color: '#666', maxHeight: '60px', overflow: 'auto' }}>
+              {details.slice(0, 5).map(([word, count]) => <span key={word} style={{ marginRight: '8px' }}>"{word}" ×{count}</span>)}
+              {details.length > 5 && <span>+{details.length - 5} more</span>}
             </div>
           )}
         </div>
@@ -324,1092 +203,269 @@
     function WebsiteRoaster() {
       const [url, setUrl] = useState('');
       const [loading, setLoading] = useState(false);
-      const [error, setError] = useState('');
-      const [results, setResults] = useState(null);
       const [roast, setRoast] = useState('');
-      const [loadingMessages, setLoadingMessages] = useState([LOADING_MESSAGES[0]]);
-      const [isSpeaking, setIsSpeaking] = useState(false);
-      const [speechSupported, setSpeechSupported] = useState(false);
-      const [audioLoading, setAudioLoading] = useState(false);
-      const [ttsError, setTtsError] = useState('');
-      const [ttsLoadingMessage, setTtsLoadingMessage] = useState(TTS_LOADING_MESSAGES[0]);
-      const [copySuccess, setCopySuccess] = useState(false);
+      const [results, setResults] = useState(null);
+      const [error, setError] = useState('');
+      const [loadingMessages, setLoadingMessages] = useState([]);
+      const [roastingMessages, setRoastingMessages] = useState([]);
+      const [currentStage, setCurrentStage] = useState('analyzing');
       const [audioUrl, setAudioUrl] = useState(null);
-      const [audioDuration, setAudioDuration] = useState(0);
-      const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+      const [ttsError, setTtsError] = useState('');
       const [isAudioPlaying, setIsAudioPlaying] = useState(false);
-      const [shareUrl, setShareUrl] = useState(null);
-      const [shareLoading, setShareLoading] = useState(false);
-      const [shareCopied, setShareCopied] = useState(false);
-      const [isSharedView, setIsSharedView] = useState(false);
-      const [audioBase64, setAudioBase64] = useState(null);
-      const [loadingStage, setLoadingStage] = useState('analyzing');
-      const [shouldAutoGenerateAudio, setShouldAutoGenerateAudio] = useState(false);
-      const [showTranscript, setShowTranscript] = useState(false);
+      const [ttsLoadingMessage, setTtsLoadingMessage] = useState('');
       const audioRef = useRef(null);
-      const canvasRef = useRef(null);
-      const analyserRef = useRef(null);
-      const animationRef = useRef(null);
-      const speechRef = useRef(null);
+      const [showTranscript, setShowTranscript] = useState(false);
+      const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+      const [audioDuration, setAudioDuration] = useState(0);
+      const [shareUrl, setShareUrl] = useState('');
+      const [isSharing, setIsSharing] = useState(false);
+      const [copySuccess, setCopySuccess] = useState(false);
 
-      // Check for speech synthesis support (fallback for browser TTS)
       useEffect(() => {
-        setSpeechSupported('speechSynthesis' in window);
-        
-        // Check if we're viewing a shared roast
-        const pathMatch = window.location.pathname.match(/^\/r\/([a-zA-Z0-9_-]+)$/);
-        if (pathMatch) {
-          const shareId = pathMatch[1];
-          setIsSharedView(true);
-          loadSharedRoast(shareId);
-          return;
-        }
-        
-        // Load cached results from localStorage on mount
-        try {
+        const pathMatch = window.location.pathname.match(/^\/r\/(.+)$/);
+        if (pathMatch) loadSharedRoast(pathMatch[1]);
+        else {
           const cached = localStorage.getItem('lastRoast');
           if (cached) {
-            const { url: cachedUrl, results: cachedResults, roast: cachedRoast } = JSON.parse(cached);
-            setUrl(cachedUrl || '');
-            setResults(cachedResults || null);
-            setRoast(cachedRoast || '');
+            try {
+              const data = JSON.parse(cached);
+              if (data.url && data.roast && data.results) {
+                setUrl(data.url); setRoast(data.roast); setResults(data.results);
+                if (data.audio) {
+                  const binary = atob(data.audio);
+                  const bytes = new Uint8Array(binary.length);
+                  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                  setAudioUrl(URL.createObjectURL(new Blob([bytes], { type: 'audio/mpeg' })));
+                }
+                if (data.shareUrl) setShareUrl(data.shareUrl);
+              }
+            } catch (e) {}
           }
-        } catch (e) {
-          console.log('No cached results found');
         }
       }, []);
-      
-      // Load a shared roast
-      const loadSharedRoast = async (shareId) => {
+
+      async function loadSharedRoast(shareId) {
+        setLoading(true); setCurrentStage('analyzing');
         try {
-          setLoading(true);
-          const response = await fetch(`/api/share/${shareId}`);
-          if (!response.ok) {
-            throw new Error('Roast not found');
-          }
+          const response = await fetch('/api/share/' + shareId);
+          if (!response.ok) throw new Error('Roast not found');
           const data = await response.json();
-          setUrl(data.url);
-          setResults(data.results);
-          setRoast(data.roast);
-          
-          // If there's audio, load it and set up player
+          setUrl(data.url); setRoast(data.roast); setResults(data.results); setShareUrl(window.location.href);
           if (data.audio) {
-            const audioBlob = base64ToBlob(data.audio, 'audio/mpeg');
-            const newAudioUrl = URL.createObjectURL(audioBlob);
-            setAudioUrl(newAudioUrl);
-            setAudioBase64(data.audio);
-            
-            // Set up audio element for player controls
-            const audio = new Audio(newAudioUrl);
-            audioRef.current = audio;
-            
-            audio.onloadedmetadata = () => {
-              setAudioDuration(audio.duration);
-            };
-            
-            audio.ontimeupdate = () => {
-              setAudioCurrentTime(audio.currentTime);
-            };
-            
-            audio.onplay = () => setIsAudioPlaying(true);
-            audio.onpause = () => setIsAudioPlaying(false);
-            
-            audio.onended = () => {
-              setIsSpeaking(false);
-              setIsAudioPlaying(false);
-            };
+            const binary = atob(data.audio);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            setAudioUrl(URL.createObjectURL(new Blob([bytes], { type: 'audio/mpeg' })));
           }
-        } catch (e) {
-          setError('This roast could not be found. It may have expired or been deleted.');
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-      // Helper to convert base64 to blob
-      const base64ToBlob = (base64, mimeType) => {
-        const byteCharacters = atob(base64);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        return new Blob([byteArray], { type: mimeType });
-      };
-      
-      // Helper to convert blob to base64
-      const blobToBase64 = (blob) => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64 = reader.result.split(',')[1];
-            resolve(base64);
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
-      };
-      
-      // Save results to localStorage whenever they change
-      useEffect(() => {
-        if (results && roast) {
-          try {
-            localStorage.setItem('lastRoast', JSON.stringify({
-              url,
-              results,
-              roast,
-              timestamp: Date.now()
-            }));
-          } catch (e) {
-            console.log('Could not cache results');
-          }
-        }
-      }, [results, roast, url]);
+        } catch (err) { setError('This roast has expired or does not exist'); }
+        finally { setLoading(false); }
+      }
 
-      // Cycle through loading messages - stack them up
       useEffect(() => {
-        if (!loading) {
-          setLoadingMessages([LOADING_MESSAGES[0]]); // Reset when not loading
-          return;
+        if (audioRef.current) {
+          const audio = audioRef.current;
+          const updateTime = () => setAudioCurrentTime(audio.currentTime);
+          const updateDuration = () => setAudioDuration(audio.duration);
+          const handleEnded = () => setIsAudioPlaying(false);
+          audio.addEventListener('timeupdate', updateTime);
+          audio.addEventListener('loadedmetadata', updateDuration);
+          audio.addEventListener('ended', handleEnded);
+          return () => { audio.removeEventListener('timeupdate', updateTime); audio.removeEventListener('loadedmetadata', updateDuration); audio.removeEventListener('ended', handleEnded); };
         }
-        
-        let messageIndex = 0;
-        const interval = setInterval(() => {
-          messageIndex = (messageIndex + 1) % LOADING_MESSAGES.length;
+      }, [audioUrl]);
+
+      const formatTime = (seconds) => { if (!seconds || isNaN(seconds)) return '0:00'; const mins = Math.floor(seconds / 60); const secs = Math.floor(seconds % 60); return mins + ':' + secs.toString().padStart(2, '0'); };
+      const seekTo = (e) => { if (audioRef.current && audioDuration) { const rect = e.currentTarget.getBoundingClientRect(); audioRef.current.currentTime = ((e.clientX - rect.left) / rect.width) * audioDuration; } };
+      const skipTime = (seconds) => { if (audioRef.current) audioRef.current.currentTime = Math.max(0, Math.min(audioDuration, audioRef.current.currentTime + seconds)); };
+      const toggleAudio = () => { if (audioRef.current) { if (isAudioPlaying) audioRef.current.pause(); else audioRef.current.play(); setIsAudioPlaying(!isAudioPlaying); } };
+
+      async function copyToClipboard(text) {
+        try { await navigator.clipboard.writeText(text); setCopySuccess(true); setTimeout(() => setCopySuccess(false), 2000); return true; }
+        catch (err) {
+          try {
+            const textArea = document.createElement('textarea'); textArea.value = text; textArea.style.position = 'fixed'; textArea.style.left = '-999999px';
+            document.body.appendChild(textArea); textArea.focus(); textArea.select();
+            const success = document.execCommand('copy'); document.body.removeChild(textArea);
+            if (success) { setCopySuccess(true); setTimeout(() => setCopySuccess(false), 2000); return true; }
+          } catch (e) {}
+          return false;
+        }
+      }
+
+      async function handleSubmit(e) {
+        e.preventDefault();
+        if (!url) return;
+        setLoading(true); setError(''); setRoast(''); setResults(null); setLoadingMessages([]); setRoastingMessages([]); setAudioUrl(null); setTtsError(''); setCurrentStage('analyzing'); setShareUrl(''); setShowTranscript(false);
+        localStorage.removeItem('lastRoast');
+        if (window.location.pathname.startsWith('/r/')) window.history.pushState({}, '', '/');
+
+        const messageInterval = setInterval(() => {
           setLoadingMessages(prev => {
-            const newMessages = [...prev, LOADING_MESSAGES[messageIndex]];
-            // Keep only the last 6 messages to prevent infinite growth
-            return newMessages.slice(-6);
+            const available = LOADING_MESSAGES.filter(m => !prev.includes(m));
+            if (available.length === 0) return prev;
+            return [...prev, available[Math.floor(Math.random() * available.length)]];
           });
-        }, 3000);
-
-        return () => clearInterval(interval);
-      }, [loading]);
-
-      // Cycle through TTS loading messages
-      useEffect(() => {
-        if (!audioLoading) return;
-        
-        const interval = setInterval(() => {
-          setTtsLoadingMessage(prev => {
-            const currentIndex = TTS_LOADING_MESSAGES.indexOf(prev);
-            const nextIndex = (currentIndex + 1) % TTS_LOADING_MESSAGES.length;
-            return TTS_LOADING_MESSAGES[nextIndex];
-          });
-        }, 2000);
-
-        return () => clearInterval(interval);
-      }, [audioLoading]);
-
-      const speakRoast = async () => {
-        if (!roast) return;
-
-        // If already speaking, stop
-        if (isSpeaking) {
-          if (audioRef.current) {
-            audioRef.current.pause();
-            audioRef.current = null;
-          }
-          window.speechSynthesis.cancel();
-          setIsSpeaking(false);
-          return;
-        }
-
-        setTtsError('');
-        setAudioLoading(true);
-        setLoadingStage('audio');
-        setIsSpeaking(true);
+        }, 1500);
 
         try {
-          // Call our backend server which proxies to ElevenLabs
-          console.log('Calling backend TTS');
-          
-          const backendUrl = '/api/tts';
-          
-          const response = await fetch(backendUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              text: roast
-            })
-          });
+          let urlToAnalyze = url.trim();
+          if (!urlToAnalyze.startsWith('http://') && !urlToAnalyze.startsWith('https://')) urlToAnalyze = 'https://' + urlToAnalyze;
 
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error('TTS error response:', response.status, errorText);
-            throw new Error(`API error ${response.status}: ${errorText}`);
-          }
+          const [response] = await Promise.all([
+            fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: urlToAnalyze }) }),
+            delay(6000)
+          ]);
+          clearInterval(messageInterval);
+          setCurrentStage('roasting');
 
-          const audioBlob = await response.blob();
-          console.log('Got audio blob:', audioBlob.size, 'bytes');
-          
-          // Revoke old URL if exists
-          if (audioUrl) {
-            URL.revokeObjectURL(audioUrl);
-          }
-          
-          const newAudioUrl = URL.createObjectURL(audioBlob);
-          setAudioUrl(newAudioUrl);
-          
-          // Store base64 for sharing
-          const base64Audio = await blobToBase64(audioBlob);
-          setAudioBase64(base64Audio);
-          
-          const audio = new Audio(newAudioUrl);
-          audioRef.current = audio;
-          
-          // Set up audio events for player
-          audio.onloadedmetadata = () => {
-            setAudioDuration(audio.duration);
-          };
-          
-          audio.ontimeupdate = () => {
-            setAudioCurrentTime(audio.currentTime);
-          };
-          
-          audio.onplay = () => setIsAudioPlaying(true);
-          audio.onpause = () => setIsAudioPlaying(false);
-          
-          audio.onended = () => {
-            setIsSpeaking(false);
-            setIsAudioPlaying(false);
-          };
-          audio.onerror = (e) => {
-            console.error('Audio playback error:', e);
-            setIsSpeaking(false);
-            setIsAudioPlaying(false);
-          };
-          
-          setAudioLoading(false);
-          setLoading(false);  // Now show results with audio ready
-          audio.play();  // Auto-play
-        } catch (err) {
-          console.error('TTS error:', err);
-          const errorMsg = err.message.includes('Failed to fetch') 
-            ? 'Cannot connect to backend server. Make sure server.js is running on port 3001.'
-            : err.message;
-          setTtsError(`TTS failed: ${errorMsg}. Using browser voice.`);
-          setAudioLoading(false);
-          setLoading(false);  // Show results even if audio failed
-          setIsSpeaking(false);
-          speakWithBrowserTTS();
-        }
-      };
+          const roastingInterval = setInterval(() => {
+            setRoastingMessages(prev => {
+              const available = ROASTING_MESSAGES.filter(m => !prev.includes(m));
+              if (available.length === 0) return prev;
+              return [...prev, available[Math.floor(Math.random() * available.length)]];
+            });
+          }, 1500);
 
-      const speakWithBrowserTTS = () => {
-        if (!speechSupported || !roast) return;
-        
-        setIsSpeaking(true);
-
-        const utterance = new SpeechSynthesisUtterance(roast);
-        
-        const voices = window.speechSynthesis.getVoices();
-        const preferredVoices = voices.filter(v => 
-          v.lang.startsWith('en') && (v.name.includes('Male') || v.name.includes('Daniel') || v.name.includes('Alex'))
-        );
-        if (preferredVoices.length > 0) {
-          utterance.voice = preferredVoices[0];
-        }
-
-        utterance.rate = 0.95;
-        utterance.pitch = 0.9;
-        
-        utterance.onend = () => setIsSpeaking(false);
-        utterance.onerror = () => setIsSpeaking(false);
-
-        speechRef.current = utterance;
-        window.speechSynthesis.speak(utterance);
-      };
-
-      const copyRoastToClipboard = async () => {
-        try {
-          await navigator.clipboard.writeText(roast);
-          setCopySuccess(true);
-          setTimeout(() => setCopySuccess(false), 2000);
-        } catch (err) {
-          console.error('Failed to copy:', err);
-        }
-      };
-
-      // Auto-generate audio when a fresh roast completes
-      useEffect(() => {
-        if (shouldAutoGenerateAudio && roast && !audioUrl && !audioLoading) {
-          setShouldAutoGenerateAudio(false);
-          speakRoast();
-        }
-      }, [shouldAutoGenerateAudio, roast, audioUrl, audioLoading]);
-
-      const downloadAudio = () => {
-        if (!audioUrl) return;
-        const a = document.createElement('a');
-        a.href = audioUrl;
-        a.download = 'website-roast.mp3';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      };
-
-      const shareRoast = async () => {
-        if (!results || !roast) return;
-        
-        // If we're viewing a shared roast, just copy the current URL
-        if (isSharedView) {
-          try {
-            await navigator.clipboard.writeText(window.location.href);
-            setShareCopied(true);
-            setShareUrl(window.location.href);
-            setTimeout(() => setShareCopied(false), 2000);
-          } catch (err) {
-            console.error('Copy error:', err);
-          }
-          return;
-        }
-        
-        // If we already have a share URL, just copy it
-        if (shareUrl) {
-          try {
-            await navigator.clipboard.writeText(shareUrl);
-            setShareCopied(true);
-            setTimeout(() => setShareCopied(false), 2000);
-          } catch (err) {
-            console.error('Copy error:', err);
-          }
-          return;
-        }
-        
-        setShareLoading(true);
-        try {
-          const response = await fetch('/api/share', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              url,
-              roast,
-              results,
-              audio: audioBase64 || null
-            })
-          });
-          
-          if (!response.ok) {
-            throw new Error('Failed to create share link');
-          }
-          
-          const data = await response.json();
-          setShareUrl(data.shareUrl);
-          
-          // Copy to clipboard
-          await navigator.clipboard.writeText(data.shareUrl);
-          setShareCopied(true);
-          setTimeout(() => setShareCopied(false), 2000);
-        } catch (err) {
-          console.error('Share error:', err);
-          setTtsError('Failed to create share link');
-        } finally {
-          setShareLoading(false);
-        }
-      };
-
-      const togglePlayPause = () => {
-        if (!audioRef.current) return;
-        if (isAudioPlaying) {
-          audioRef.current.pause();
-        } else {
-          audioRef.current.play();
-        }
-      };
-
-      const skipTime = (seconds) => {
-        if (!audioRef.current) return;
-        audioRef.current.currentTime = Math.max(0, Math.min(audioRef.current.currentTime + seconds, audioDuration));
-      };
-
-      const seekTo = (e) => {
-        if (!audioRef.current) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        const percent = (e.clientX - rect.left) / rect.width;
-        audioRef.current.currentTime = percent * audioDuration;
-      };
-
-      const formatTime = (seconds) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-      };
-
-      const analyzeWebsite = async () => {
-        if (!url.trim()) {
-          setError('Please enter a URL. I know typing is hard, but try.');
-          return;
-        }
-
-        let processedUrl = url.trim();
-        if (!processedUrl.startsWith('http://') && !processedUrl.startsWith('https://')) {
-          processedUrl = 'https://' + processedUrl;
-        }
-
-        // Stop any ongoing speech
-        if (isSpeaking) {
-          if (audioRef.current) {
-            audioRef.current.pause();
-            audioRef.current = null;
-          }
-          window.speechSynthesis.cancel();
-          setIsSpeaking(false);
-        }
-
-        setLoading(true);
-        setLoadingStage('analyzing');
-        setError('');
-        setResults(null);
-        setRoast('');
-        setTtsError('');
-        setCopySuccess(false);
-        setShareUrl(null);
-        setShareCopied(false);
-        setAudioBase64(null);
-        setShouldAutoGenerateAudio(true);
-        if (audioUrl) {
-          URL.revokeObjectURL(audioUrl);
-          setAudioUrl(null);
-        }
-        setLoadingMessages([LOADING_MESSAGES[0]]);
-
-        try {
-          // Call our backend which proxies to Anthropic
-          const response = await fetch('/api/analyze', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ url: processedUrl })
-          });
-          
-          // Move to roasting stage once we get the response back
-          setLoadingStage('roasting');
-
-          const data = await response.json();
-          
-          // Check for errors from our backend
-          if (data.error) {
-            throw new Error(data.error + (data.details ? ': ' + data.details : ''));
-          }
-          
-          // Check that we have the expected response structure
-          if (!data.content || !Array.isArray(data.content)) {
-            console.error('Unexpected response structure:', data);
-            throw new Error('Unexpected response from server');
-          }
-          
-          let responseText = '';
-          for (const block of data.content) {
-            if (block.type === 'text') {
-              responseText += block.text;
+          const responseText = await response.text();
+          if (!response.ok) { clearInterval(roastingInterval); throw new Error(responseText || 'API Error'); }
+          const data = JSON.parse(responseText);
+          let parsedResponse = null;
+          if (data.content && Array.isArray(data.content)) {
+            for (const block of data.content) {
+              if (block.type === 'text' && block.text) {
+                try { const jsonMatch = block.text.match(/\{[\s\S]*"roast"[\s\S]*\}/); if (jsonMatch) { parsedResponse = JSON.parse(jsonMatch[0]); break; } } catch (e) {}
+              }
             }
           }
+          if (!parsedResponse) { clearInterval(roastingInterval); throw new Error('Could not parse response'); }
 
-          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-          if (!jsonMatch) {
-            throw new Error('Could not parse response');
-          }
+          await delay(6000);
+          clearInterval(roastingInterval);
 
-          const parsed = JSON.parse(jsonMatch[0]);
-          const analysis = analyzeContent(parsed.pageText);
-          
-          setResults(analysis);
-          setRoast(parsed.roast);
-          // Don't set loading to false here - wait for audio to complete
+          const analyzedResults = analyzeText(parsedResponse.pageText);
+          setResults(analyzedResults); setRoast(parsedResponse.roast);
+          setCurrentStage('audio');
 
-        } catch (err) {
-          setError(`Failed to analyze website: ${err.message}. Either the site is hiding from judgment, or something went wrong on our end.`);
-          setLoading(false);
-        }
-      };
+          let ttsMessageIndex = 0;
+          setTtsLoadingMessage(TTS_LOADING_MESSAGES[0]);
+          const ttsInterval = setInterval(() => { ttsMessageIndex = (ttsMessageIndex + 1) % TTS_LOADING_MESSAGES.length; setTtsLoadingMessage(TTS_LOADING_MESSAGES[ttsMessageIndex]); }, 2500);
 
-      const overallScore = results ? 
-        Math.min(100, results.buzzwords.total * 3 + results.vagueClaims.total * 5 + results.ctas.total * 2) : 0;
-      
-      const getOverallVerdict = (score) => {
-        // Cheesy stock photos from Unsplash for each verdict level
-        if (score < 20) return { 
-          text: 'Surprisingly Genuine', 
-          image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=260&fit=crop',
-          alt: 'Happy genuine team meeting'
-        };
-        if (score < 40) return { 
-          text: 'Mildly Infected', 
-          image: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=400&h=260&fit=crop',
-          alt: 'Slightly awkward business handshake'
-        };
-        if (score < 60) return { 
-          text: 'Corporate Brain Rot', 
-          image: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400&h=260&fit=crop',
-          alt: 'Overly enthusiastic team high five'
-        };
-        if (score < 80) return { 
-          text: 'Terminal LinkedIn', 
-          image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&h=260&fit=crop',
-          alt: 'Woman pointing at whiteboard with buzzwords'
-        };
-        return { 
-          text: 'Weapons-Grade Cringe', 
-          image: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=400&h=260&fit=crop',
-          alt: 'Peak corporate synergy meeting'
-        };
-      };
+          try {
+            const ttsResponse = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: parsedResponse.roast }) });
+            clearInterval(ttsInterval);
+            if (ttsResponse.ok) {
+              const audioBlob = await ttsResponse.blob();
+              setAudioUrl(URL.createObjectURL(audioBlob));
+              const reader = new FileReader();
+              reader.onloadend = () => { localStorage.setItem('lastRoast', JSON.stringify({ url: urlToAnalyze, roast: parsedResponse.roast, results: analyzedResults, audio: reader.result.split(',')[1], timestamp: Date.now() })); };
+              reader.readAsDataURL(audioBlob);
+            } else throw new Error('TTS failed');
+          } catch (ttsErr) { clearInterval(ttsInterval); setTtsError('Audio generation failed'); localStorage.setItem('lastRoast', JSON.stringify({ url: urlToAnalyze, roast: parsedResponse.roast, results: analyzedResults, timestamp: Date.now() })); }
+        } catch (err) { setError(err.message || 'Something went wrong'); }
+        finally { setLoading(false); }
+      }
+
+      async function handleShare() {
+        if (!roast || !results || isSharing) return;
+        if (shareUrl) { await copyToClipboard(shareUrl); return; }
+        setIsSharing(true);
+        try {
+          let audioBase64 = null;
+          const cached = localStorage.getItem('lastRoast');
+          if (cached) audioBase64 = JSON.parse(cached).audio;
+          const response = await fetch('/api/share', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, roast, results, audio: audioBase64 }) });
+          if (!response.ok) throw new Error('Failed to create share link');
+          const data = await response.json();
+          setShareUrl(data.shareUrl);
+          if (cached) { const cachedData = JSON.parse(cached); cachedData.shareUrl = data.shareUrl; localStorage.setItem('lastRoast', JSON.stringify(cachedData)); }
+          const copied = await copyToClipboard(data.shareUrl);
+          if (!copied) { setCopySuccess(true); setTimeout(() => setCopySuccess(false), 2000); }
+        } catch (err) { setTtsError('Failed to create share link: ' + err.message); }
+        finally { setIsSharing(false); }
+      }
 
       return (
-        <div style={{
-          minHeight: '100vh',
-          background: 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%)',
-          color: '#fff',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          padding: '40px 20px'
-        }}>
+        <div style={{ minHeight: '100vh', color: '#fff', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', padding: '20px' }}>
           <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            {/* Header */}
-            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-              <h1 style={{ 
-                fontSize: '48px', 
-                marginBottom: '8px',
-                background: 'linear-gradient(90deg, #ff6b6b, #feca57, #ff6b6b)',
-                backgroundSize: '200% auto',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                animation: 'shimmer 3s linear infinite'
-              }}>
-                🔥 Website Roaster
+            <div style={{ textAlign: 'center', marginBottom: '40px', marginTop: '40px' }}>
+              <h1 style={{ fontSize: 'clamp(2rem, 8vw, 3.5rem)', fontWeight: 'bold', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+                <span style={{ fontSize: 'clamp(2rem, 8vw, 3rem)' }}>🔥</span>
+                <span style={{ background: 'linear-gradient(135deg, #ff6b6b, #feca57, #ff6b6b)', backgroundSize: '200% auto', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', animation: 'shimmer 3s linear infinite' }}>Website Roaster</span>
+                <span style={{ fontSize: 'clamp(2rem, 8vw, 3rem)' }}>🔥</span>
               </h1>
-              <p style={{ color: '#888', fontSize: '18px' }}>
-                Brutally honest analysis of your corporate word salad
-              </p>
-              <p style={{ 
-                color: '#666', 
-                fontSize: '13px', 
-                marginTop: '16px',
-                fontStyle: 'italic',
-                maxWidth: '500px',
-                margin: '16px auto 0'
-              }}>
-                ⚠️ These roasts are AI-generated (but let's be honest - you probably could drop a buzzword or two).
-              </p>
+              <p style={{ color: '#888', fontSize: '1.1rem' }}>Let AI roast your corporate buzzword bingo</p>
             </div>
 
-            {/* Input */}
-            <div style={{
-              display: 'flex',
-              gap: '12px',
-              marginBottom: '32px'
-            }}>
-              <input
-                type="text"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !loading && analyzeWebsite()}
-                placeholder="Enter a URL to roast..."
-                style={{
-                  flex: 1,
-                  padding: '16px 20px',
-                  fontSize: '16px',
-                  background: '#1a1a2e',
-                  border: '2px solid #333',
-                  borderRadius: '12px',
-                  color: '#fff',
-                  outline: 'none'
-                }}
-              />
-              <button
-                onClick={analyzeWebsite}
-                disabled={loading}
-                style={{
-                  padding: '16px 32px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  background: loading ? '#333' : 'linear-gradient(90deg, #ff6b6b, #ee5a5a)',
-                  border: 'none',
-                  borderRadius: '12px',
-                  color: '#fff',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'transform 0.2s'
-                }}
-              >
-                {loading ? '🔍 Judging...' : '🔥 Roast It'}
-              </button>
-            </div>
-            
-            {/* Buy Me a Coffee */}
-            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              <a 
-                href="https://buymeacoffee.com/chriskiertz" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                style={{
-                  color: '#feca57',
-                  textDecoration: 'none',
-                  fontSize: '14px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 16px',
-                  background: '#2a2a1e',
-                  borderRadius: '8px',
-                  border: '1px solid #feca5744',
-                  transition: 'all 0.2s'
-                }}
-              >
-                ☕ Buy me a coffee!
-              </a>
-            </div>
-
-            {/* Error */}
-            {error && (
-              <div style={{
-                background: '#4a1a1a',
-                border: '1px solid #ff6b6b',
-                borderRadius: '12px',
-                padding: '16px',
-                marginBottom: '24px',
-                color: '#ff8a8a'
-              }}>
-                {error}
+            <form onSubmit={handleSubmit} style={{ marginBottom: '32px' }}>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <input type="text" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Enter website URL (e.g., example.com)" style={{ flex: 1, minWidth: '200px', padding: '16px 20px', fontSize: '16px', border: '2px solid #333', borderRadius: '12px', background: '#1a1a2e', color: '#fff', outline: 'none' }} />
+                <button type="submit" disabled={loading || !url} style={{ padding: '16px 32px', fontSize: '16px', fontWeight: 'bold', border: 'none', borderRadius: '12px', background: loading ? '#333' : 'linear-gradient(135deg, #ff6b6b, #ee5a5a)', color: '#fff', cursor: loading ? 'not-allowed' : 'pointer' }}>{loading ? '🔥 Roasting...' : '🔥 Roast It!'}</button>
               </div>
-            )}
+            </form>
 
-            {/* Loading - show progress indicator through all stages until audio ready */}
-            {loading && (
-              <ProgressIndicator 
-                stage={loadingStage} 
-                loadingMessages={loadingMessages}
-                ttsLoadingMessage={ttsLoadingMessage}
-              />
-            )}
+            {loading && <ProgressIndicator stage={currentStage} loadingMessages={loadingMessages} roastingMessages={roastingMessages} ttsLoadingMessage={ttsLoadingMessage} />}
+            {error && <div style={{ padding: '20px', background: '#2a1a1a', border: '1px solid #ff6b6b44', borderRadius: '12px', color: '#ff6b6b', marginBottom: '24px' }}><strong>Oops!</strong> {error}</div>}
 
-            {/* Results - only show when everything is ready */}
             {results && !loading && (
               <div>
-                {/* Overall Score */}
-                <div style={{
-                  background: 'linear-gradient(135deg, #2a1a3e 0%, #1a2a4e 100%)',
-                  borderRadius: '16px',
-                  padding: '32px',
-                  marginBottom: '24px',
-                  textAlign: 'center',
-                  border: '2px solid #333'
-                }}>
-                  <div style={{ 
-                    width: '340px',
-                    height: '220px',
-                    margin: '0 auto 16px',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    border: '3px solid #444',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
-                  }}>
-                    <img 
-                      src={getOverallVerdict(overallScore).image}
-                      alt={getOverallVerdict(overallScore).alt}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover'
-                      }}
-                    />
+                <div style={{ background: 'linear-gradient(135deg, #1a1a2e, #2a2a4e)', borderRadius: '16px', padding: '24px', marginBottom: '24px', border: '1px solid #333' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+                    <h2 style={{ fontSize: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>🎤 The Roast</h2>
+                    <button onClick={handleShare} disabled={isSharing} style={{ padding: '8px 16px', fontSize: '14px', background: copySuccess ? '#22c55e' : shareUrl ? '#8b5cf6' : '#2a2a4e', border: '1px solid ' + (copySuccess ? '#22c55e' : shareUrl ? '#8b5cf6' : '#444'), borderRadius: '8px', color: '#fff', cursor: isSharing ? 'not-allowed' : 'pointer' }}>
+                      {isSharing ? '⏳ Creating...' : copySuccess ? '✓ Copied!' : shareUrl ? '🔗 Copy Link' : '🔗 Share'}
+                    </button>
                   </div>
-                  <div style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '8px' }}>
-                    {getOverallVerdict(overallScore).text}
-                  </div>
-                  <div style={{ color: '#888' }}>
-                    Corporate Cringe Score: {overallScore}/100
-                  </div>
-                  <div style={{
-                    marginTop: '16px',
-                    height: '8px',
-                    background: '#333',
-                    borderRadius: '4px',
-                    overflow: 'hidden'
-                  }}>
-                    <div style={{
-                      height: '100%',
-                      width: `${overallScore}%`,
-                      background: `linear-gradient(90deg, #22c55e, #eab308, #ef4444)`,
-                      borderRadius: '4px',
-                      transition: 'width 0.5s ease'
-                    }} />
-                  </div>
-                </div>
 
-                {/* The Roast */}
-                <div style={{
-                  background: '#1a1a2e',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  marginBottom: '24px',
-                  border: '2px solid #ff6b6b33'
-                }}>
-                  <div style={{ 
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '16px',
-                    flexWrap: 'wrap',
-                    gap: '12px'
-                  }}>
-                    <h2 style={{ 
-                      fontSize: '20px', 
-                      margin: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}>
-                      🎤 The Roast
-                    </h2>
-                    {(speechSupported) && (
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <button
-                          onClick={shareRoast}
-                          disabled={shareLoading}
-                          style={{
-                            padding: '8px 12px',
-                            fontSize: '14px',
-                            background: shareCopied ? '#22c55e' : shareUrl ? '#8b5cf6' : '#8b5cf6',
-                            border: '1px solid #444',
-                            borderRadius: '8px',
-                            color: '#fff',
-                            cursor: shareLoading ? 'wait' : 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                        >
-                          {shareLoading ? '⏳ Creating...' : shareCopied ? '✓ Copied!' : '🔗 Copy Link'}
-                        </button>
-                        {shareUrl && (
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            background: '#0f0f1a',
-                            borderRadius: '6px',
-                            padding: '6px 10px',
-                            border: '1px solid #333'
-                          }}>
-                            <input
-                              type="text"
-                              value={shareUrl}
-                              readOnly
-                              onClick={(e) => e.target.select()}
-                              style={{
-                                width: '180px',
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#8b5cf6',
-                                fontSize: '12px',
-                                fontFamily: 'monospace',
-                                outline: 'none'
-                              }}
-                            />
-                            <button
-                              onClick={async () => {
-                                await navigator.clipboard.writeText(shareUrl);
-                                setShareCopied(true);
-                                setTimeout(() => setShareCopied(false), 2000);
-                              }}
-                              style={{
-                                padding: '4px 8px',
-                                fontSize: '11px',
-                                background: shareCopied ? '#22c55e' : '#333',
-                                border: 'none',
-                                borderRadius: '4px',
-                                color: '#fff',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              {shareCopied ? '✓' : '📋'}
-                            </button>
-                          </div>
-                        )}
+                  {audioUrl && (
+                    <div style={{ background: '#0f0f1a', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
+                      <audio ref={audioRef} src={audioUrl} />
+                      <div onClick={seekTo} style={{ height: '6px', background: '#333', borderRadius: '3px', marginBottom: '12px', cursor: 'pointer' }}>
+                        <div style={{ height: '100%', background: 'linear-gradient(90deg, #8b5cf6, #a78bfa)', borderRadius: '3px', width: (audioDuration ? (audioCurrentTime / audioDuration) * 100 : 0) + '%' }} />
                       </div>
-                    )}
-                  </div>
-                  
-                  {/* TTS Loading Message */}
-                  {audioLoading && (
-                    <div style={{
-                      textAlign: 'center',
-                      padding: '20px',
-                      color: '#888',
-                      fontStyle: 'italic'
-                    }}>
-                      {ttsLoadingMessage}
-                    </div>
-                  )}
-                  
-                  {/* Audio Player */}
-                  {audioUrl && !audioLoading && (
-                    <div style={{
-                      background: '#0f0f1a',
-                      borderRadius: '12px',
-                      padding: '16px',
-                      marginBottom: '16px',
-                      border: '1px solid #333'
-                    }}>
-                      {/* Waveform visualization placeholder */}
-                      <div style={{
-                        height: '60px',
-                        background: 'linear-gradient(90deg, #8b5cf622 0%, #6366f144 50%, #8b5cf622 100%)',
-                        borderRadius: '8px',
-                        marginBottom: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '2px',
-                        overflow: 'hidden'
-                      }}>
-                        {/* Animated bars */}
-                        {Array.from({ length: 50 }).map((_, i) => (
-                          <div
-                            key={i}
-                            style={{
-                              width: '3px',
-                              height: isAudioPlaying ? `${20 + Math.sin(i * 0.5 + audioCurrentTime * 5) * 20}px` : '8px',
-                              background: audioCurrentTime / audioDuration > i / 50 ? '#8b5cf6' : '#333',
-                              borderRadius: '2px',
-                              transition: isAudioPlaying ? 'height 0.1s' : 'height 0.3s, background 0.1s'
-                            }}
-                          />
-                        ))}
-                      </div>
-                      
-                      {/* Progress bar */}
-                      <div 
-                        onClick={seekTo}
-                        style={{
-                          height: '6px',
-                          background: '#333',
-                          borderRadius: '3px',
-                          cursor: 'pointer',
-                          marginBottom: '12px'
-                        }}
-                      >
-                        <div style={{
-                          height: '100%',
-                          width: `${(audioCurrentTime / audioDuration) * 100 || 0}%`,
-                          background: 'linear-gradient(90deg, #8b5cf6, #6366f1)',
-                          borderRadius: '3px',
-                          transition: 'width 0.1s'
-                        }} />
-                      </div>
-                      
-                      {/* Controls */}
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '16px'
-                      }}>
-                        <span style={{ fontSize: '12px', color: '#666', minWidth: '40px' }}>
-                          {formatTime(audioCurrentTime)}
-                        </span>
-                        
-                        <button
-                          onClick={() => skipTime(-15)}
-                          style={{
-                            padding: '8px 12px',
-                            fontSize: '12px',
-                            background: '#2a2a4e',
-                            border: '1px solid #444',
-                            borderRadius: '8px',
-                            color: '#fff',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          -15s
-                        </button>
-                        
-                        <button
-                          onClick={togglePlayPause}
-                          style={{
-                            padding: '12px 20px',
-                            fontSize: '18px',
-                            fontWeight: 'bold',
-                            background: 'linear-gradient(90deg, #8b5cf6, #6366f1)',
-                            border: 'none',
-                            borderRadius: '50%',
-                            color: '#fff',
-                            cursor: 'pointer',
-                            width: '50px',
-                            height: '50px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
-                        >
-                          {isAudioPlaying ? '⏸' : '▶'}
-                        </button>
-                        
-                        <button
-                          onClick={() => skipTime(15)}
-                          style={{
-                            padding: '8px 12px',
-                            fontSize: '12px',
-                            background: '#2a2a4e',
-                            border: '1px solid #444',
-                            borderRadius: '8px',
-                            color: '#fff',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          +15s
-                        </button>
-                        
-                        <span style={{ fontSize: '12px', color: '#666', minWidth: '40px', textAlign: 'right' }}>
-                          {formatTime(audioDuration)}
-                        </span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+                        <span style={{ fontSize: '12px', color: '#666', minWidth: '40px' }}>{formatTime(audioCurrentTime)}</span>
+                        <button onClick={() => skipTime(-15)} style={{ padding: '8px 12px', fontSize: '12px', background: '#2a2a4e', border: '1px solid #444', borderRadius: '8px', color: '#fff', cursor: 'pointer' }}>-15s</button>
+                        <button onClick={toggleAudio} style={{ padding: '12px', fontSize: '20px', background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', border: 'none', borderRadius: '50%', color: '#fff', cursor: 'pointer', width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{isAudioPlaying ? '⏸' : '▶'}</button>
+                        <button onClick={() => skipTime(15)} style={{ padding: '8px 12px', fontSize: '12px', background: '#2a2a4e', border: '1px solid #444', borderRadius: '8px', color: '#fff', cursor: 'pointer' }}>+15s</button>
+                        <span style={{ fontSize: '12px', color: '#666', minWidth: '40px', textAlign: 'right' }}>{formatTime(audioDuration)}</span>
                       </div>
                     </div>
                   )}
-                  
-                  {ttsError && (
-                    <div style={{ 
-                      fontSize: '12px', 
-                      color: '#f97316', 
-                      marginBottom: '12px',
-                      padding: '8px 12px',
-                      background: '#4a2a1a',
-                      borderRadius: '6px',
-                      border: '1px solid #f9731644'
-                    }}>
-                      ⚠️ {ttsError}
-                    </div>
-                  )}
-                  
-                  {/* Collapsible Transcript */}
-                  <button
-                    onClick={() => setShowTranscript(!showTranscript)}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: '#888',
-                      fontSize: '14px',
-                      cursor: 'pointer',
-                      padding: '8px 0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <span style={{ 
-                      transform: showTranscript ? 'rotate(90deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.2s',
-                      display: 'inline-block'
-                    }}>▶</span>
+
+                  {ttsError && <div style={{ fontSize: '12px', color: '#f97316', marginBottom: '12px', padding: '8px 12px', background: '#4a2a1a', borderRadius: '6px' }}>⚠️ {ttsError}</div>}
+
+                  <button onClick={() => setShowTranscript(!showTranscript)} style={{ background: 'transparent', border: 'none', color: '#888', fontSize: '14px', cursor: 'pointer', padding: '8px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ transform: showTranscript ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-block' }}>▶</span>
                     {showTranscript ? 'Hide transcript' : 'Show full transcript'}
                   </button>
-                  
-                  {showTranscript && (
-                    <div style={{ 
-                      color: '#ccc', 
-                      lineHeight: '1.7',
-                      whiteSpace: 'pre-wrap',
-                      marginTop: '12px',
-                      padding: '16px',
-                      background: '#0f0f1a',
-                      borderRadius: '8px',
-                      border: '1px solid #333'
-                    }}>
-                      {stripAudioTags(roast)}
-                    </div>
-                  )}
+                  {showTranscript && <div style={{ color: '#ccc', lineHeight: '1.7', whiteSpace: 'pre-wrap', marginTop: '12px', padding: '16px', background: '#0f0f1a', borderRadius: '8px', border: '1px solid #333' }}>{stripAudioTags(roast)}</div>}
                 </div>
 
-                {/* Report Cards Grid */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                  gap: '16px',
-                  marginBottom: '24px'
-                }}>
-                  <ReportCard
-                    title="Buzzword Count"
-                    score={results.buzzwords.total}
-                    thresholds={{ a: 3, b: 8, c: 15, d: 25 }}
-                    details={Object.entries(results.buzzwords.matches).sort((a, b) => b[1] - a[1])}
-                    icon="📢"
-                  />
-                  <ReportCard
-                    title="Vague Claims"
-                    score={results.vagueClaims.total}
-                    thresholds={{ a: 1, b: 3, c: 6, d: 10 }}
-                    details={Object.entries(results.vagueClaims.matches).sort((a, b) => b[1] - a[1])}
-                    icon="🌫️"
-                  />
-                  <ReportCard
-                    title="CTA Desperation"
-                    score={results.ctas.total}
-                    thresholds={{ a: 2, b: 5, c: 10, d: 15 }}
-                    details={Object.entries(results.ctas.matches).sort((a, b) => b[1] - a[1])}
-                    icon="🚨"
-                  />
-                  <ReportCard
-                    title="Exclamation Abuse!"
-                    score={results.exclamationCount}
-                    thresholds={{ a: 2, b: 5, c: 10, d: 20 }}
-                    icon="❗"
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                  <ReportCard title="Buzzword Count" score={results.buzzwords.total} thresholds={{ a: 3, b: 8, c: 15, d: 25 }} details={Object.entries(results.buzzwords.matches).sort((a, b) => b[1] - a[1])} icon="📢" />
+                  <ReportCard title="Vague Claims" score={results.vagueClaims.total} thresholds={{ a: 1, b: 3, c: 6, d: 10 }} details={Object.entries(results.vagueClaims.matches).sort((a, b) => b[1] - a[1])} icon="🌫️" />
+                  <ReportCard title="CTA Desperation" score={results.ctas.total} thresholds={{ a: 2, b: 5, c: 10, d: 15 }} details={Object.entries(results.ctas.matches).sort((a, b) => b[1] - a[1])} icon="🚨" />
+                  <ReportCard title="Exclamation Abuse!" score={results.exclamationCount} thresholds={{ a: 2, b: 5, c: 10, d: 20 }} icon="❗" />
                 </div>
 
-                {/* Additional Stats */}
-                <div style={{
-                  background: '#1a1a2e',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                  gap: '16px'
-                }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ color: '#888', fontSize: '12px', marginBottom: '4px' }}>Word Count</div>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{results.wordCount}</div>
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ color: '#888', fontSize: '12px', marginBottom: '4px' }}>Avg Word Length</div>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{results.avgWordLength}</div>
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ color: '#888', fontSize: '12px', marginBottom: '4px' }}>We:You Ratio</div>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: parseFloat(results.weYouRatio) > 1 ? '#ff6b6b' : '#22c55e' }}>
-                      {results.weYouRatio}
-                    </div>
-                    <div style={{ fontSize: '10px', color: '#666' }}>
-                      {parseFloat(results.weYouRatio) > 1 ? '(Self-obsessed)' : '(Customer-focused)'}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ color: '#888', fontSize: '12px', marginBottom: '4px' }}>Avg Sentence</div>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{results.avgSentenceLength}</div>
-                    <div style={{ fontSize: '10px', color: '#666' }}>words</div>
-                  </div>
+                <div style={{ background: '#1a1a2e', borderRadius: '12px', padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px' }}>
+                  <div style={{ textAlign: 'center' }}><div style={{ color: '#888', fontSize: '12px', marginBottom: '4px' }}>Word Count</div><div style={{ fontSize: '24px', fontWeight: 'bold' }}>{results.wordCount}</div></div>
+                  <div style={{ textAlign: 'center' }}><div style={{ color: '#888', fontSize: '12px', marginBottom: '4px' }}>Avg Word Length</div><div style={{ fontSize: '24px', fontWeight: 'bold' }}>{results.avgWordLength}</div></div>
+                  <div style={{ textAlign: 'center' }}><div style={{ color: '#888', fontSize: '12px', marginBottom: '4px' }}>We:You Ratio</div><div style={{ fontSize: '24px', fontWeight: 'bold', color: parseFloat(results.weYouRatio) > 1 ? '#ff6b6b' : '#22c55e' }}>{results.weYouRatio}</div></div>
+                  <div style={{ textAlign: 'center' }}><div style={{ color: '#888', fontSize: '12px', marginBottom: '4px' }}>Avg Sentence</div><div style={{ fontSize: '24px', fontWeight: 'bold' }}>{results.avgSentenceLength}</div></div>
                 </div>
               </div>
             )}
 
-            {/* Footer */}
-            <div style={{ 
-              textAlign: 'center', 
-              marginTop: '48px', 
-              color: '#444',
-              fontSize: '14px'
-            }}>
+            <div style={{ textAlign: 'center', marginTop: '48px', color: '#444', fontSize: '14px' }}>
               <p>Built with cynicism and caffeine ☕</p>
-              <p style={{ fontSize: '12px', marginTop: '8px' }}>
-                No websites were permanently harmed in this roasting
-              </p>
+              <p style={{ fontSize: '12px', marginTop: '8px' }}>No websites were permanently harmed in this roasting</p>
             </div>
           </div>
         </div>
       );
     }
 
-    // Render the app
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<WebsiteRoaster />);
   </script>

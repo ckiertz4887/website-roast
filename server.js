@@ -392,10 +392,10 @@ app.get('/r/:id', async (req, res) => {
     const data = await redisGet(`roast:${id}`);
     
     if (data && data.url) {
-      // Extract domain from the roasted URL for the title
-      let domain = 'a website';
+      // Extract clean URL for the title (remove protocol and trailing slash)
+      let displayUrl = 'a website';
       try {
-        domain = new URL(data.url).hostname.replace('www.', '');
+        displayUrl = data.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
       } catch (e) {}
       
       // Get a short preview of the roast (first 150 chars, strip audio tags)
@@ -412,11 +412,11 @@ app.get('/r/:id', async (req, res) => {
       // Replace the meta tags
       html = html.replace(
         /<title>.*?<\/title>/,
-        `<title>🔥 ${domain} just got roasted!</title>`
+        `<title>🔥 ${displayUrl} just got roasted!</title>`
       );
       html = html.replace(
         /<meta property="og:title" content=".*?">/,
-        `<meta property="og:title" content="🔥 ${domain} just got roasted!">`
+        `<meta property="og:title" content="🔥 ${displayUrl} just got roasted!">`
       );
       html = html.replace(
         /<meta property="og:description" content=".*?">/,
@@ -432,7 +432,7 @@ app.get('/r/:id', async (req, res) => {
       );
       html = html.replace(
         /<meta name="twitter:title" content=".*?">/,
-        `<meta name="twitter:title" content="🔥 ${domain} just got roasted!">`
+        `<meta name="twitter:title" content="🔥 ${displayUrl} just got roasted!">`
       );
       html = html.replace(
         /<meta name="twitter:description" content=".*?">/,
