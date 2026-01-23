@@ -203,6 +203,14 @@ First, search for and retrieve the actual content from this website. Then provid
   "pageText": "the full text content you found on the page including headings, paragraphs, and marketing copy",
   "roast": "A 3-4 paragraph witty roast of this website. You're a comedian doing a bit about corporate websites. Mix sharp observations with humor - use funny analogies, point out absurdities with a smile, joke about buzzwords. Be clever, not cruel. Make fun of HOW they present themselves, not the product itself. Use good comedic timing with setups and punchlines. Make it fun to listen to. Really dig into the material - find multiple angles to riff on.
 
+IMPORTANT GUARDRAIL: If this website belongs to a legitimate charity, nonprofit, humanitarian organization, hospital, cancer research center, disaster relief organization, or any organization doing genuine good in the world - DO NOT roast them harshly. Instead, give them a warm, encouraging 'anti-roast' that:
+- Praises their mission and the important work they do
+- Gently and lovingly teases any minor corporate-speak or buzzwords (if present)
+- Ends with genuine appreciation for their contribution to society
+- Keeps a warm, supportive tone throughout
+
+For regular corporate/business websites, roast away!
+
 IMPORTANT: Include ElevenLabs audio tags throughout for expressive delivery:
 - Use [sighs] when expressing exasperation at buzzwords
 - Use [chuckles] or [laughs] after jokes
@@ -392,10 +400,10 @@ app.get('/r/:id', async (req, res) => {
     const data = await redisGet(`roast:${id}`);
     
     if (data && data.url) {
-      // Extract clean URL for the title (remove protocol and trailing slash)
+      // Extract clean domain for the title (remove protocol, www, and trailing slash)
       let displayUrl = 'a website';
       try {
-        displayUrl = data.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        displayUrl = new URL(data.url).hostname.replace(/^www\./, '');
       } catch (e) {}
       
       // Get a short preview of the roast (first 150 chars, strip audio tags)
