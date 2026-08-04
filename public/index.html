@@ -110,11 +110,10 @@
       return text.replace(/\[(?:sighs?|chuckles?|laughs?|sarcastically|dramatically|pause|sassy|sarcastic|comedic)[^\]]*\]/gi, '').replace(/\s+/g, ' ').trim();
     }
 
-    function ProgressIndicator({ stage, loadingMessages, ttsLoadingMessage }) {
+    function ProgressIndicator({ stage, loadingMessages }) {
       const stages = [
-        { key: 'analyzing', label: 'Analyzing website', icon: '🔍' },
+        { key: 'analyzing', label: 'Fetching & analyzing', icon: '🔍' },
         { key: 'roasting', label: 'Generating roast', icon: '🔥' },
-        { key: 'audio', label: 'Creating audio', icon: '🎙️' }
       ];
       
       let currentIndex = stages.findIndex(s => s.key === stage);
@@ -162,25 +161,21 @@
             {stages[currentIndex].icon}
           </div>
           
-          {stage === 'audio' ? (
-            <p style={{ color: '#fff', fontSize: '16px', margin: '8px 0' }}>{ttsLoadingMessage}</p>
-          ) : (
-            <div style={{ maxHeight: '150px', overflow: 'hidden', marginBottom: '16px' }}>
-              {loadingMessages.map((msg, index) => (
-                <p key={index} style={{ 
-                  color: index === loadingMessages.length - 1 ? '#fff' : '#666', 
-                  fontSize: index === loadingMessages.length - 1 ? '16px' : '13px',
-                  margin: '8px 0',
-                  opacity: index === loadingMessages.length - 1 ? 1 : 0.6
-                }}>
-                  {index === loadingMessages.length - 1 ? msg : '✓ ' + msg}
-                </p>
-              ))}
-            </div>
-          )}
-          
+          <div style={{ maxHeight: '150px', overflow: 'hidden', marginBottom: '16px' }}>
+            {loadingMessages.map((msg, index) => (
+              <p key={index} style={{
+                color: index === loadingMessages.length - 1 ? '#fff' : '#666',
+                fontSize: index === loadingMessages.length - 1 ? '16px' : '13px',
+                margin: '8px 0',
+                opacity: index === loadingMessages.length - 1 ? 1 : 0.6
+              }}>
+                {index === loadingMessages.length - 1 ? msg : '✓ ' + msg}
+              </p>
+            ))}
+          </div>
+
           <p style={{ color: '#666', fontSize: '14px', marginTop: '16px' }}>
-            {stage === 'audio' ? "Almost there! The best part is coming..." : "This might take a moment. The site has a lot to answer for."}
+            This might take a moment. The site has a lot to answer for.
           </p>
         </div>
       );
@@ -485,9 +480,6 @@
         }
       };
       
-      // Helper for delays
-      const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-      
       // Save results to localStorage whenever they change
       useEffect(() => {
         if (results && roast) {
@@ -555,7 +547,6 @@
 
         setTtsError('');
         setAudioLoading(true);
-        setLoadingStage('audio');
         setIsSpeaking(true);
 
         try {
@@ -621,16 +612,14 @@
           };
           
           setAudioLoading(false);
-          setLoading(false);  // Now show results with audio ready
-          audio.play();  // Auto-play
+          audio.play();
         } catch (err) {
           console.error('TTS error:', err);
-          const errorMsg = err.message.includes('Failed to fetch') 
+          const errorMsg = err.message.includes('Failed to fetch')
             ? 'Cannot connect to backend server. Make sure server.js is running on port 3001.'
             : err.message;
           setTtsError(`TTS failed: ${errorMsg}. Using browser voice.`);
           setAudioLoading(false);
-          setLoading(false);  // Show results even if audio failed
           setIsSpeaking(false);
           speakWithBrowserTTS();
         }
@@ -826,41 +815,23 @@
         setLoadingMessages([LOADING_MESSAGES[0]]);
 
         try {
-          // Call our backend which proxies to Anthropic
-          // Start timing for analyzing stage (minimum 6 seconds)
-          const analyzeStartTime = Date.now();
-          
           const response = await fetch('/api/analyze', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: processedUrl })
           });
-          
-          // Ensure analyzing stage shows for at least 6 seconds
-          const analyzeElapsed = Date.now() - analyzeStartTime;
-          if (analyzeElapsed < 6000) {
-            await delay(6000 - analyzeElapsed);
-          }
-          
-          // Move to roasting stage
-          setLoadingStage('roasting');
-          const roastStartTime = Date.now();
 
           const data = await response.json();
-          
-          // Check for errors from our backend
+
           if (data.error) {
             throw new Error(data.error + (data.details ? ': ' + data.details : ''));
           }
-          
-          // Check that we have the expected response structure
+
           if (!data.content || !Array.isArray(data.content)) {
             console.error('Unexpected response structure:', data);
             throw new Error('Unexpected response from server');
           }
-          
+
           let responseText = '';
           for (const block of data.content) {
             if (block.type === 'text') {
@@ -875,16 +846,10 @@
 
           const parsed = JSON.parse(jsonMatch[0]);
           const analysis = analyzeContent(parsed.pageText);
-          
-          // Ensure roasting stage shows for at least 6 seconds
-          const roastElapsed = Date.now() - roastStartTime;
-          if (roastElapsed < 6000) {
-            await delay(6000 - roastElapsed);
-          }
-          
+
           setResults(analysis);
           setRoast(parsed.roast);
-          // Don't set loading to false here - wait for audio to complete
+          setLoading(false);  // Show results immediately; audio loads in background
 
         } catch (err) {
           setError(`Failed to analyze website: ${err.message}. Either the site is hiding from judgment, or something went wrong on our end.`);
@@ -1043,14 +1008,13 @@
 
             {/* Loading - show progress indicator through all stages until audio ready */}
             {loading && (
-              <ProgressIndicator 
-                stage={loadingStage} 
+              <ProgressIndicator
+                stage={loadingStage}
                 loadingMessages={loadingMessages}
-                ttsLoadingMessage={ttsLoadingMessage}
               />
             )}
 
-            {/* Results - only show when everything is ready */}
+            {/* Results - show immediately after analysis; audio loads in background */}
             {results && !loading && (
               <div>
                 {/* Overall Score */}

@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
 const path = require('path');
+const fs = require('fs');
 const { createCanvas } = require('@napi-rs/canvas');
 
 // --------------------
@@ -120,6 +121,58 @@ function isBlockedSite(url) {
 }
 
 // --------------------
+// RATE LIMITING (per IP, in-memory)
+// --------------------
+const rateLimits = new Map();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX = 10;
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const cutoff = now - RATE_LIMIT_WINDOW;
+  const timestamps = (rateLimits.get(ip) || []).filter(t => t > cutoff);
+  timestamps.push(now);
+  rateLimits.set(ip, timestamps);
+  return timestamps.length <= RATE_LIMIT_MAX;
+}
+
+// --------------------
+// URL FETCHER
+// --------------------
+async function fetchWebsiteText(url) {
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.5',
+    },
+    signal: AbortSignal.timeout(10000),
+    redirect: 'follow'
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  const html = await response.text();
+
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim()
+    .substring(0, 15000);
+}
+
+// --------------------
 // CACHING (in-memory for API responses)
 // --------------------
 const websiteCache = new Map();
@@ -138,6 +191,23 @@ function createHash(text) {
 function generateShareId() {
   return crypto.randomBytes(6).toString('base64url'); // 8 char ID
 }
+
+// Prune expired cache entries and stale rate-limit records hourly
+setInterval(() => {
+  const now = Date.now();
+  const rlCutoff = now - RATE_LIMIT_WINDOW;
+  for (const [key, entry] of websiteCache.entries()) {
+    if (now - entry.timestamp > CACHE_TTL) websiteCache.delete(key);
+  }
+  for (const [key, entry] of audioCache.entries()) {
+    if (now - entry.timestamp > CACHE_TTL) audioCache.delete(key);
+  }
+  for (const [ip, timestamps] of rateLimits.entries()) {
+    const fresh = timestamps.filter(t => t > rlCutoff);
+    if (fresh.length === 0) rateLimits.delete(ip);
+    else rateLimits.set(ip, fresh);
+  }
+}, 60 * 60 * 1000);
 
 // --------------------
 // EXPRESS APP
@@ -167,22 +237,37 @@ app.post('/api/analyze', async (req, res) => {
     }
     
     if (isBlockedSite(url)) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         error: 'This site cannot be roasted',
         details: 'We only roast corporate websites, not... whatever that is. Keep it classy! 🎩'
       });
     }
-    
+
+    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip;
+    if (!checkRateLimit(ip)) {
+      return res.status(429).json({ error: "Slow down! You've submitted too many roasts. Try again in a minute." });
+    }
+
     const cacheKey = url.toLowerCase().replace(/\/$/, '');
     const cached = websiteCache.get(cacheKey);
-    
+
     if (isCacheValid(cached)) {
       console.log(`[Analyze] Cache HIT for: ${url}`);
       return res.json(cached.data);
     }
-    
-    console.log(`[Analyze] Cache MISS - Roasting website: ${url}`);
-    
+
+    console.log(`[Analyze] Cache MISS - Fetching and roasting: ${url}`);
+
+    let pageText;
+    try {
+      pageText = await fetchWebsiteText(url);
+    } catch (fetchErr) {
+      console.error(`[Analyze] Failed to fetch ${url}:`, fetchErr.message);
+      return res.status(422).json({
+        error: `Could not fetch website: ${fetchErr.message}. The site may be blocking bots or unreachable.`
+      });
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -195,12 +280,16 @@ app.post('/api/analyze', async (req, res) => {
         max_tokens: 1500,
         messages: [{
           role: 'user',
-          content: `Fetch and analyze the content of this website: ${url}
+          content: `Here is the text content scraped from the website ${url}:
 
-First, search for and retrieve the actual content from this website. Then provide your response in EXACTLY this JSON format (no other text before or after, just the JSON):
+<website_content>
+${pageText}
+</website_content>
+
+Provide your response in EXACTLY this JSON format (no other text before or after, just the JSON):
 
 {
-  "pageText": "the full text content you found on the page including headings, paragraphs, and marketing copy",
+  "pageText": "copy the full website text content from above",
   "roast": "A 3-4 paragraph witty roast of this website. You're a comedian doing a bit about corporate websites. Mix sharp observations with humor - use funny analogies, point out absurdities with a smile, joke about buzzwords. Be clever, not cruel. Make fun of HOW they present themselves, not the product itself. Use good comedic timing with setups and punchlines. Make it fun to listen to. Really dig into the material - find multiple angles to riff on.
 
 IMPORTANT GUARDRAIL: If this website belongs to a legitimate charity, nonprofit, humanitarian organization, hospital, cancer research center, disaster relief organization, or any organization doing genuine good in the world - DO NOT roast them harshly. Instead, give them a warm, encouraging 'anti-roast' that:
@@ -214,14 +303,13 @@ For regular corporate/business websites, roast away!
 IMPORTANT: Include ElevenLabs audio tags throughout for expressive delivery:
 - Use [sighs] when expressing exasperation at buzzwords
 - Use [chuckles] or [laughs] after jokes
-- Use [sarcastically] before sarcastic observations  
+- Use [sarcastically] before sarcastic observations
 - Use [dramatically] for dramatic effect
 - Use [pause] for comedic timing before punchlines
 
 Example: '[sighs] Oh look, another company that\\'s \"revolutionizing\" something. [sarcastically] How refreshing. [pause] They\\'ve managed to use the word synergy three times in one paragraph. [chuckles] That\\'s actually impressive.'"
 }`
-        }],
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }]
+        }]
       })
     });
 
@@ -414,7 +502,6 @@ app.get('/r/:id', async (req, res) => {
         .substring(0, 150) + '...';
       
       // Read the index.html and inject dynamic meta tags
-      const fs = require('fs');
       let html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
       
       // Replace the meta tags
