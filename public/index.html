@@ -721,14 +721,13 @@
             body: JSON.stringify({ url, roast, results })
           });
           
-          if (!response.ok) {
-            throw new Error('Failed to create share link');
-          }
-          
           const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || `Server error ${response.status}`);
+          }
+
           setShareUrl(data.shareUrl);
-          
-          // Copy to clipboard - but show success either way since link was created
           try {
             await copyToClipboard(data.shareUrl);
           } catch (err) {
@@ -738,7 +737,7 @@
           setTimeout(() => setShareCopied(false), 2000);
         } catch (err) {
           console.error('Share error:', err);
-          setTtsError('Failed to create share link');
+          setTtsError(`Share failed: ${err.message}`);
         } finally {
           setShareLoading(false);
         }

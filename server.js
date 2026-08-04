@@ -30,66 +30,47 @@ if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
 // --------------------
 // UPSTASH REDIS HELPERS
 // --------------------
-async function redisSet(key, value, expirationSeconds = 60 * 60 * 24 * 30) {
-  // Store for 30 days by default
+async function redisCommand(args) {
   if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
-    console.error('[Redis] Missing Upstash credentials');
-    return false;
+    return { ok: false, error: 'UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN not set in environment' };
   }
-  
+  const url = UPSTASH_REDIS_REST_URL.replace(/\/$/, '');
   try {
-    // Upstash REST API uses a different format - send command as array in body
-    const response = await fetch(`${UPSTASH_REDIS_REST_URL}`, {
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${UPSTASH_REDIS_REST_TOKEN}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(['SET', key, JSON.stringify(value), 'EX', expirationSeconds])
+      body: JSON.stringify(args)
     });
-    
-    const result = await response.json();
-    console.log('[Redis] Set response:', result);
-    
-    if (result.error) {
-      console.error('[Redis] Set error:', result.error);
-      return false;
-    }
-    
-    return result.result === 'OK';
+    const json = await response.json();
+    console.log('[Redis]', args[0], args[1], '→', JSON.stringify(json).substring(0, 120));
+    if (json.error) return { ok: false, error: json.error };
+    return { ok: true, result: json.result };
   } catch (e) {
-    console.error('[Redis] Set error:', e);
-    return false;
+    return { ok: false, error: e.message };
   }
 }
 
+async function redisSet(key, value, ttlSeconds = 60 * 60 * 24 * 30) {
+  const { ok, error, result } = await redisCommand(['SET', key, JSON.stringify(value), 'EX', ttlSeconds]);
+  if (!ok) return { ok: false, error };
+  const saved = typeof result === 'string' && result.toUpperCase() === 'OK';
+  return saved ? { ok: true } : { ok: false, error: `Unexpected SET response: ${result}` };
+}
+
 async function redisGet(key) {
-  if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
-    console.error('[Redis] Missing Upstash credentials');
+  const { ok, error, result } = await redisCommand(['GET', key]);
+  if (!ok) {
+    console.error('[Redis] GET failed:', error);
     return null;
   }
-  
+  if (!result) return null;
   try {
-    const response = await fetch(`${UPSTASH_REDIS_REST_URL}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${UPSTASH_REDIS_REST_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(['GET', key])
-    });
-    
-    const data = await response.json();
-    console.log('[Redis] Get response for', key, ':', data.result ? 'found' : 'not found');
-    
-    if (data.error) {
-      console.error('[Redis] Get error:', data.error);
-      return null;
-    }
-    
-    return data.result ? JSON.parse(data.result) : null;
+    return JSON.parse(result);
   } catch (e) {
-    console.error('[Redis] Get error:', e);
+    console.error('[Redis] JSON parse error for key', key, e.message);
     return null;
   }
 }
@@ -471,11 +452,11 @@ app.post('/api/share', async (req, res) => {
 
     console.log(`[Share] Saving roast ${shareId} for ${url} (${JSON.stringify(shareData).length} bytes)`);
     
-    const saved = await redisSet(`roast:${shareId}`, shareData);
-    
+    const { ok: saved, error: redisError } = await redisSet(`roast:${shareId}`, shareData);
+
     if (!saved) {
-      console.error('[Share] Failed to save to Redis');
-      return res.status(500).json({ error: 'Failed to save roast to database' });
+      console.error('[Share] Redis save failed:', redisError);
+      return res.status(500).json({ error: `Failed to save roast: ${redisError}` });
     }
     
     console.log(`[Share] Successfully saved roast ${shareId}`);
