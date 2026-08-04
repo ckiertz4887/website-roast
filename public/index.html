@@ -816,11 +816,17 @@
             body: JSON.stringify({ url: processedUrl })
           });
 
-          const data = await response.json();
-
-          if (data.error) {
-            throw new Error(data.error + (data.details ? ': ' + data.details : ''));
+          if (!response.ok) {
+            let errMsg = `Server error ${response.status}`;
+            try {
+              const errData = await response.json();
+              errMsg = errData.error || errMsg;
+              if (errData.details) errMsg += ': ' + errData.details;
+            } catch {}
+            throw new Error(errMsg);
           }
+
+          const data = await response.json();
 
           if (!data.content || !Array.isArray(data.content)) {
             console.error('Unexpected response structure:', data);

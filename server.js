@@ -140,15 +140,23 @@ function checkRateLimit(ip) {
 // URL FETCHER
 // --------------------
 async function fetchWebsiteText(url) {
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'en-US,en;q=0.5',
-    },
-    signal: AbortSignal.timeout(10000),
-    redirect: 'follow'
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  let response;
+  try {
+    response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+      },
+      signal: controller.signal,
+      redirect: 'follow'
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
@@ -323,8 +331,16 @@ Example: '[sighs] Oh look, another company that\\'s \"revolutionizing\" somethin
     }
 
     const data = await response.json();
+
+    if (!data.content || !Array.isArray(data.content)) {
+      console.error('[Analyze] Unexpected Anthropic response structure:', JSON.stringify(data).substring(0, 300));
+      return res.status(500).json({
+        error: 'Unexpected response from Claude API',
+        details: JSON.stringify(data).substring(0, 300)
+      });
+    }
+
     console.log(`[Analyze] Successfully got response from Claude`);
-    
     websiteCache.set(cacheKey, { data, timestamp: Date.now() });
     res.json(data);
     
