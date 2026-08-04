@@ -419,29 +419,25 @@ app.post('/api/tts', async (req, res) => {
 // Save a roast for sharing
 app.post('/api/share', async (req, res) => {
   try {
-    const { url, roast, results, audio } = req.body;
-    
+    const { url, roast, results } = req.body;
+
     if (!url || !roast || !results) {
       console.error('[Share] Missing required fields');
       return res.status(400).json({ error: 'Missing required fields' });
     }
-    
+
     if (!UPSTASH_REDIS_REST_URL || !UPSTASH_REDIS_REST_TOKEN) {
       console.error('[Share] Upstash not configured');
       return res.status(500).json({ error: 'Sharing is not configured - missing Upstash credentials' });
     }
-    
+
     const shareId = generateShareId();
-    
-    const shareData = {
-      url,
-      roast,
-      results,
-      audio: audio || null, // base64 encoded audio if provided
-      createdAt: Date.now()
-    };
-    
-    console.log(`[Share] Saving roast ${shareId} for ${url} (audio: ${audio ? 'yes' : 'no'}, size: ${JSON.stringify(shareData).length} bytes)`);
+
+    // Audio is intentionally excluded — base64 MP3 blows past Upstash's 1MB limit.
+    // Viewers can generate audio fresh via the TTS endpoint (it's cached server-side anyway).
+    const shareData = { url, roast, results, createdAt: Date.now() };
+
+    console.log(`[Share] Saving roast ${shareId} for ${url} (${JSON.stringify(shareData).length} bytes)`);
     
     const saved = await redisSet(`roast:${shareId}`, shareData);
     

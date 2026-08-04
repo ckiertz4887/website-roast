@@ -718,12 +718,7 @@
           const response = await fetch('/api/share', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              url,
-              roast,
-              results,
-              audio: audioBase64 || null
-            })
+            body: JSON.stringify({ url, roast, results })
           });
           
           if (!response.ok) {
