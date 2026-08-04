@@ -828,28 +828,15 @@
 
           const data = await response.json();
 
-          if (!data.content || !Array.isArray(data.content)) {
+          if (!data.roast || !data.pageText) {
             console.error('Unexpected response structure:', data);
             throw new Error('Unexpected response from server');
           }
 
-          let responseText = '';
-          for (const block of data.content) {
-            if (block.type === 'text') {
-              responseText += block.text;
-            }
-          }
-
-          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-          if (!jsonMatch) {
-            throw new Error('Could not parse response');
-          }
-
-          const parsed = JSON.parse(jsonMatch[0]);
-          const analysis = analyzeContent(parsed.pageText);
+          const analysis = analyzeContent(data.pageText);
 
           setResults(analysis);
-          setRoast(parsed.roast);
+          setRoast(data.roast);
           setLoading(false);  // Show results immediately; audio loads in background
 
         } catch (err) {

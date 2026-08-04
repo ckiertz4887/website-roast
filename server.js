@@ -285,7 +285,7 @@ app.post('/api/analyze', async (req, res) => {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1500,
+        max_tokens: 2000,
         messages: [{
           role: 'user',
           content: `Here is the text content scraped from the website ${url}:
@@ -294,19 +294,11 @@ app.post('/api/analyze', async (req, res) => {
 ${pageText}
 </website_content>
 
-Provide your response in EXACTLY this JSON format (no other text before or after, just the JSON):
+Respond with ONLY a JSON object in this exact format (no other text before or after):
 
-{
-  "pageText": "copy the full website text content from above",
-  "roast": "A 3-4 paragraph witty roast of this website. You're a comedian doing a bit about corporate websites. Mix sharp observations with humor - use funny analogies, point out absurdities with a smile, joke about buzzwords. Be clever, not cruel. Make fun of HOW they present themselves, not the product itself. Use good comedic timing with setups and punchlines. Make it fun to listen to. Really dig into the material - find multiple angles to riff on.
+{"roast": "A 3-4 paragraph witty roast of this website. You're a comedian doing a bit about corporate websites. Mix sharp observations with humor - use funny analogies, point out absurdities with a smile, joke about buzzwords. Be clever, not cruel. Make fun of HOW they present themselves, not the product itself. Use good comedic timing with setups and punchlines. Make it fun to listen to. Really dig into the material - find multiple angles to riff on.
 
-IMPORTANT GUARDRAIL: If this website belongs to a legitimate charity, nonprofit, humanitarian organization, hospital, cancer research center, disaster relief organization, or any organization doing genuine good in the world - DO NOT roast them harshly. Instead, give them a warm, encouraging 'anti-roast' that:
-- Praises their mission and the important work they do
-- Gently and lovingly teases any minor corporate-speak or buzzwords (if present)
-- Ends with genuine appreciation for their contribution to society
-- Keeps a warm, supportive tone throughout
-
-For regular corporate/business websites, roast away!
+IMPORTANT GUARDRAIL: If this website belongs to a legitimate charity, nonprofit, humanitarian organization, hospital, cancer research center, disaster relief organization, or any organization doing genuine good in the world - DO NOT roast them harshly. Instead, give them a warm, encouraging anti-roast that praises their mission, gently teases any minor corporate-speak, and ends with genuine appreciation.
 
 IMPORTANT: Include ElevenLabs audio tags throughout for expressive delivery:
 - Use [sighs] when expressing exasperation at buzzwords
@@ -315,8 +307,7 @@ IMPORTANT: Include ElevenLabs audio tags throughout for expressive delivery:
 - Use [dramatically] for dramatic effect
 - Use [pause] for comedic timing before punchlines
 
-Example: '[sighs] Oh look, another company that\\'s \"revolutionizing\" something. [sarcastically] How refreshing. [pause] They\\'ve managed to use the word synergy three times in one paragraph. [chuckles] That\\'s actually impressive.'"
-}`
+Example: '[sighs] Oh look, another company that\\'s \\"revolutionizing\\" something. [sarcastically] How refreshing. [pause] They\\'ve managed to use the word synergy three times in one paragraph. [chuckles] That\\'s actually impressive.'"}`
         }]
       })
     });
@@ -330,19 +321,44 @@ Example: '[sighs] Oh look, another company that\\'s \"revolutionizing\" somethin
       });
     }
 
-    const data = await response.json();
+    const claudeData = await response.json();
 
-    if (!data.content || !Array.isArray(data.content)) {
-      console.error('[Analyze] Unexpected Anthropic response structure:', JSON.stringify(data).substring(0, 300));
+    if (!claudeData.content || !Array.isArray(claudeData.content)) {
+      console.error('[Analyze] Unexpected Anthropic response structure:', JSON.stringify(claudeData).substring(0, 300));
       return res.status(500).json({
         error: 'Unexpected response from Claude API',
-        details: JSON.stringify(data).substring(0, 300)
+        details: JSON.stringify(claudeData).substring(0, 300)
       });
     }
 
-    console.log(`[Analyze] Successfully got response from Claude`);
-    websiteCache.set(cacheKey, { data, timestamp: Date.now() });
-    res.json(data);
+    const responseText = claudeData.content
+      .filter(b => b.type === 'text')
+      .map(b => b.text)
+      .join('');
+
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error('[Analyze] No JSON found in Claude response:', responseText.substring(0, 300));
+      return res.status(500).json({ error: 'Could not parse roast from Claude response' });
+    }
+
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      console.error('[Analyze] JSON parse error:', e.message, responseText.substring(0, 300));
+      return res.status(500).json({ error: 'Malformed JSON from Claude', details: e.message });
+    }
+
+    if (!parsed.roast) {
+      console.error('[Analyze] Missing roast field in response:', JSON.stringify(parsed).substring(0, 200));
+      return res.status(500).json({ error: 'Claude response missing roast field' });
+    }
+
+    const result = { roast: parsed.roast, pageText };
+    console.log(`[Analyze] Successfully roasted ${url}`);
+    websiteCache.set(cacheKey, { data: result, timestamp: Date.now() });
+    res.json(result);
     
   } catch (error) {
     console.error('[Analyze] Error:', error);
